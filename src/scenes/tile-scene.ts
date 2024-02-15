@@ -31,6 +31,7 @@ export class TileScene extends Phaser.Scene {
         this.load.image('ground', '../assets/ground.png');
         this.load.image('grass', '../assets/grass.png');
         this.load.image('tractor', '../assets/tractor.png');
+        // this.load.image('corn', '../assets/corn.png');
     }
 
     create(): void {
@@ -45,11 +46,8 @@ export class TileScene extends Phaser.Scene {
     }
 
     private createCartesianTilePoints() {
-
-        const halfTilemapSize = Math.floor(this.TILEMAP_SIZE / 2);
-
-        for (let x = this.playerPosition.x - this.TILE_SIZE * halfTilemapSize; x <= this.playerPosition.x + this.TILE_SIZE * halfTilemapSize; x += this.TILE_SIZE) {
-            for (let y = this.playerPosition.y - this.TILE_SIZE * halfTilemapSize; y <= this.playerPosition.y + this.TILE_SIZE * halfTilemapSize; y += this.TILE_SIZE) {
+        for (let x = 0; x <= this.TILEMAP_SIZE * this.TILE_SIZE; x += this.TILE_SIZE) {
+            for (let y = 0; y <= this.TILEMAP_SIZE * this.TILE_SIZE; y += this.TILE_SIZE) {
                 this.cartesianPoints.push(new Phaser.Geom.Point(x, y));
             }
         }
@@ -61,34 +59,34 @@ export class TileScene extends Phaser.Scene {
             point.x += this.moveDir.x * this.MOVE_SPEED;
             point.y += this.moveDir.y * this.MOVE_SPEED;
 
-            const resetPointMinXOrtho = this.playerPosition.x - (this.TILE_SIZE * (Math.floor(this.TILEMAP_SIZE * .5)));
-            const resetPointMaxXOrtho = this.playerPosition.x + (this.TILE_SIZE * (Math.floor(this.TILEMAP_SIZE * .5)));
+            const resetPointMinXCart = 0;
+            const resetPointMaxXCart = this.TILEMAP_SIZE * this.TILE_SIZE
 
-            const resetPointMinYOrtho = this.playerPosition.y - (this.TILE_SIZE * (Math.floor(this.TILEMAP_SIZE * .5)));
-            const resetPointMaxYOrtho = this.playerPosition.y + (this.TILE_SIZE * (Math.floor(this.TILEMAP_SIZE * .5)));
+            const resetPointMinYCart = 0;
+            const resetPointMaxYCart = this.TILEMAP_SIZE * this.TILE_SIZE;
 
 
-            if (point.x < resetPointMinXOrtho) {
-                const offset = resetPointMinXOrtho - point.x;
-                const newPointX = this.playerPosition.x + (this.TILE_SIZE * (Math.floor(this.TILEMAP_SIZE * .5) + 1));
+            if (point.x < resetPointMinXCart) {
+                const offset = resetPointMinXCart - point.x;
+                const newPointX = this.TILEMAP_SIZE * this.TILE_SIZE
                 point.x = newPointX - offset;
             }
 
-            if (point.x > resetPointMaxXOrtho) {
-                const offset = resetPointMaxXOrtho - point.x;
-                const newPointX = this.playerPosition.x - (this.TILE_SIZE * (Math.floor(this.TILEMAP_SIZE * .5) + 1));
+            if (point.x > resetPointMaxXCart) {
+                const offset = resetPointMaxXCart - point.x;
+                const newPointX = 0;
                 point.x = newPointX - offset;
             }
 
-            if (point.y < resetPointMinYOrtho) {
-                const offset = resetPointMinYOrtho - point.y;
-                const newPointY = this.playerPosition.y + (this.TILE_SIZE * (Math.floor(this.TILEMAP_SIZE * .5) + 1));
+            if (point.y < resetPointMinYCart) {
+                const offset = resetPointMinYCart - point.y;
+                const newPointY = this.TILEMAP_SIZE * this.TILE_SIZE;
                 point.y = newPointY - offset;
             }
 
-            if (point.y > resetPointMaxYOrtho) {
-                const offset = resetPointMaxYOrtho - point.y;
-                const newPointY = this.playerPosition.y - (this.TILE_SIZE * (Math.floor(this.TILEMAP_SIZE * .5) + 1));
+            if (point.y > resetPointMaxYCart) {
+                const offset = resetPointMaxYCart - point.y;
+                const newPointY = 0;
                 point.y = newPointY - offset;
             }
 
@@ -103,7 +101,7 @@ export class TileScene extends Phaser.Scene {
         this.cartesianPoints.forEach((point) => {
             const texture = Phaser.Math.RND.pick(['ground', 'grass']);
             const isoPoint = this.cartesianToIsometric(point);
-            const image = this.add.image(200 + (isoPoint.x - 32), 150 + (isoPoint.y - 18), texture);
+            const image = this.add.image((isoPoint.x - 32), (isoPoint.y - 18), texture);
 
             this.isoTiles.push(image);
         });
@@ -180,8 +178,8 @@ export class TileScene extends Phaser.Scene {
 
         this.cartesianPoints.forEach((point, i) => {
             const isoPoint = this.cartesianToIsometric(point);
-            this.isoTiles[i].x = 350 + (isoPoint.x - 32);
-            this.isoTiles[i].y = 150 + (isoPoint.y - 18);
+            this.isoTiles[i].x = (5 * 64) + 32 + isoPoint.x;
+            this.isoTiles[i].y = 18 + isoPoint.y;
         });
     }
 }
