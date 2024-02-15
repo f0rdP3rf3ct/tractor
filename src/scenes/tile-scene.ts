@@ -1,4 +1,5 @@
 import CursorKeys = Phaser.Types.Input.Keyboard.CursorKeys;
+import {IsoImage} from "../objects/isoImage";
 
 export class TileScene extends Phaser.Scene {
 
@@ -33,7 +34,7 @@ export class TileScene extends Phaser.Scene {
         this.load.image('ground', '../assets/ground.png');
         this.load.image('grass', '../assets/grass.png');
         this.load.image('tractor', '../assets/tractor.png');
-        // this.load.image('corn', '../assets/corn.png');
+        this.load.image('corn', '../assets/corn.png');
     }
 
     create(): void {
@@ -45,6 +46,7 @@ export class TileScene extends Phaser.Scene {
         // this.addCartesianPlayer();
         this.createLayers();
         this.addGroundTiles();
+        this.addObjectTiles();
     }
 
 
@@ -110,11 +112,42 @@ export class TileScene extends Phaser.Scene {
             const texture = Phaser.Math.RND.pick(['ground', 'grass']);
             const isoPoint = this.cartesianToIsometric(point);
             this.groundLayer.add(this.make.image({x: (isoPoint.x - 32), y: (isoPoint.y - 18), key: texture}))
-            // this.isoTiles.push(image);
         });
 
+        this.player = new IsoImage({scene: this, x: this.playerPosition.x - 50, y: this.playerPosition.y - 50, texture: 'tractor'}, -1);
+
         // Player
-        this.player = this.add.image(this.playerPosition.x - 32, this.playerPosition.y - 32, 'tractor');
+        this.objectsLayer.add(this.player);
+    }
+
+    /**
+     * Returns a random set of cartesian points
+     * @private
+     */
+    private getRandomCartesianPoints(): number[] {
+        const seed = (this.TILEMAP_SIZE * this.TILEMAP_SIZE).toString();
+        Phaser.Math.RND.sow([seed]);
+
+        const numberOfRandomIndices = 50;
+        const originalArray = this.cartesianPoints;
+        const randomIndicesArray = [];
+
+        for (let i = 0; i < numberOfRandomIndices; i++) {
+            const randomIndex = Phaser.Math.RND.integerInRange(0, originalArray.length - 1);
+            randomIndicesArray.push(randomIndex);
+        }
+
+        return randomIndicesArray;
+    }
+
+    private addObjectTiles() {
+
+        const objectPositionIndices = this.getRandomCartesianPoints();
+        objectPositionIndices.forEach((index) => {
+            const isoPoint = this.cartesianToIsometric(this.cartesianPoints[index]);
+            const object = new IsoImage({scene: this, x: (isoPoint.x - 32), y: (isoPoint.y - 32), texture: 'corn'}, index);
+            this.objectsLayer.add(object);
+        });
     }
 
     private updateInput() {
@@ -149,6 +182,7 @@ export class TileScene extends Phaser.Scene {
         this.updateInput();
         this.updateCartesianTilePoints();
         // this.debugPoints();
+        this.depthSortIsometrics();
         this.renderIsometric();
     }
 
@@ -180,13 +214,45 @@ export class TileScene extends Phaser.Scene {
         return tempPt;
     }
 
+
+    private depthSortIsometrics() {
+        this.objectsLayer.sort('y', function(a : any, b : any) {
+            if (a.y < b.y) {
+                return -1;
+            }
+            if (a.y > b.y) {
+                return 1;
+            }
+            return 0;
+        });
+
+    };
+
     private renderIsometric() {
         // this.graphics.clear();
         this.cartesianPoints.forEach((point, i) => {
+            // ground
             const isoPoint = this.cartesianToIsometric(point);
             const groundTile = this.groundLayer.getChildren()[i] as Phaser.GameObjects.Image;
-            groundTile.x = (5 * 64) + 32 + isoPoint.x;
-            groundTile.y = 18 + isoPoint.y;
+            groundTile.x = (5 * 64) + isoPoint.x;
+            groundTile.y = isoPoint.y;
         });
+
+        // Update objects
+        this.objectsLayer.getChildren().forEach((object) => {
+            const isoImage = object as IsoImage;
+
+            // do not apply coordinates to the player
+            if(isoImage.texture.key === 'tractor') {
+                return;
+            }
+
+            const isoPoint = this.cartesianToIsometric(this.cartesianPoints[isoImage.getCartesianPointIndex()]);
+            isoImage.x = (5 * 64) + (isoPoint.x);
+            isoImage.y = (isoPoint.y - 18);
+        });
+
+
+
     }
 }

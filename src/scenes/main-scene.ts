@@ -1,3 +1,6 @@
+/* eslint-disable */
+// @ts-nocheck
+
 import {IsoTile} from "../objects/IsoTile";
 import {IsoImage} from "../objects/isoImage";
 import Point = Phaser.Geom.Point;
