@@ -17,11 +17,13 @@ export class TileScene extends Phaser.Scene {
 
     private cartesianPoints: Phaser.Geom.Point[] = [];
 
-    private isoTiles: Phaser.GameObjects.Image[] = [];
-
     private graphics: Phaser.GameObjects.Graphics;
 
     private player: Phaser.GameObjects.Image;
+
+    private groundLayer: Phaser.GameObjects.Layer;
+
+    private objectsLayer: Phaser.GameObjects.Layer;
 
     constructor() {
         super({key: 'TileScene'});
@@ -35,15 +37,16 @@ export class TileScene extends Phaser.Scene {
     }
 
     create(): void {
-        this.graphics = this.add.graphics({lineStyle: {width: 2, color: 0xffffff}, fillStyle: {color: 0xff0000}});
         this.cursors = this.input.keyboard.createCursorKeys();
+
         this.createCartesianTilePoints();
         this.updateCartesianTilePoints();
 
         // this.addCartesianPlayer();
-
-        this.addIsoTiles();
+        this.createLayers();
+        this.addGroundTiles();
     }
+
 
     private createCartesianTilePoints() {
         for (let x = 0; x <= this.TILEMAP_SIZE * this.TILE_SIZE; x += this.TILE_SIZE) {
@@ -51,6 +54,11 @@ export class TileScene extends Phaser.Scene {
                 this.cartesianPoints.push(new Phaser.Geom.Point(x, y));
             }
         }
+    }
+
+    private createLayers() {
+        this.groundLayer = this.add.layer();
+        this.objectsLayer = this.add.layer();
     }
 
     private updateCartesianTilePoints() {
@@ -97,13 +105,12 @@ export class TileScene extends Phaser.Scene {
         this.add.rectangle(this.playerPosition.x, this.playerPosition.y, 64, 64, 0x00ff00);
     }
 
-    private addIsoTiles() {
+    private addGroundTiles() {
         this.cartesianPoints.forEach((point) => {
             const texture = Phaser.Math.RND.pick(['ground', 'grass']);
             const isoPoint = this.cartesianToIsometric(point);
-            const image = this.add.image((isoPoint.x - 32), (isoPoint.y - 18), texture);
-
-            this.isoTiles.push(image);
+            this.groundLayer.add(this.make.image({x: (isoPoint.x - 32), y: (isoPoint.y - 18), key: texture}))
+            // this.isoTiles.push(image);
         });
 
         // Player
@@ -156,7 +163,7 @@ export class TileScene extends Phaser.Scene {
             let minDistance = 100; // Adjust this based on your needs
             let maxDistance = 300; // Adjust this based on your needs
 
-// Interpolate the alpha value based on the distance
+            // Interpolate the alpha value based on the distance
             let normalizedDistance = Phaser.Math.Clamp((dist - minDistance) / (maxDistance - minDistance), 0, 1);
             let interpolatedAlpha = 1 - normalizedDistance;
 
@@ -175,11 +182,11 @@ export class TileScene extends Phaser.Scene {
 
     private renderIsometric() {
         // this.graphics.clear();
-
         this.cartesianPoints.forEach((point, i) => {
             const isoPoint = this.cartesianToIsometric(point);
-            this.isoTiles[i].x = (5 * 64) + 32 + isoPoint.x;
-            this.isoTiles[i].y = 18 + isoPoint.y;
+            const groundTile = this.groundLayer.getChildren()[i] as Phaser.GameObjects.Image;
+            groundTile.x = (5 * 64) + 32 + isoPoint.x;
+            groundTile.y = 18 + isoPoint.y;
         });
     }
 }
