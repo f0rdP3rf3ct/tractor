@@ -1,9 +1,12 @@
 import CursorKeys = Phaser.Types.Input.Keyboard.CursorKeys;
 import {IsoImage} from "../objects/isoImage";
+import Image = Phaser.GameObjects.Image;
+import Point = Phaser.Geom.Point;
+import Sprite = Phaser.GameObjects.Sprite;
 
 export class TileScene extends Phaser.Scene {
 
-    private TILEMAP_SIZE = 10;
+    private TILEMAP_SIZE = 40;
     private TILE_SIZE = 64;
     private PLAYER_START_POSITION = {x: 400, y: 300};
 
@@ -18,13 +21,17 @@ export class TileScene extends Phaser.Scene {
 
     private cartesianPoints: Phaser.Geom.Point[] = [];
 
-    private graphics: Phaser.GameObjects.Graphics;
+    private logicPlayer: Phaser.GameObjects.Image;
 
-    private player: Phaser.GameObjects.Image;
+    private renderPlayer: Phaser.GameObjects.Sprite;
 
     private groundLayer: Phaser.GameObjects.Layer;
 
-    private objectsLayer: Phaser.GameObjects.Layer;
+    private renderObjectsLayer: Phaser.GameObjects.Layer;
+
+    private collisionGroup: Phaser.Physics.Arcade.Group;
+
+    private facing = 1;
 
     constructor() {
         super({key: 'TileScene'});
@@ -34,19 +41,63 @@ export class TileScene extends Phaser.Scene {
         this.load.image('ground', '../assets/ground.png');
         this.load.image('grass', '../assets/grass.png');
         this.load.image('tractor', '../assets/tractor.png');
-        this.load.image('corn', '../assets/corn.png');
+        this.load.image('corn', '../assets/corn_ball.png');
+        this.load.image('ground_1', '../assets/ground_1.png');
+        this.load.image('ground_2', '../assets/ground_2.png');
+
+        this.load.image('cartDebugObject', '../assets/cartDebugObject.png');
+        this.load.image('cartDebugPlayer', '../assets/cartDebugPlayer.png');
+
+        this.load.atlas('tractorAnimations', '../assets/spritesheets/tractorMove.png', '../assets/spritesheets/tractorMove.json');
+
     }
 
     create(): void {
         this.cursors = this.input.keyboard.createCursorKeys();
+        this.collisionGroup = this.physics.add.group();
 
         this.createCartesianTilePoints();
         this.updateCartesianTilePoints();
+
+        this.anims.create({
+            key: 'move',
+            frames: this.anims.generateFrameNames('tractorAnimations', {start: 1, end: 6, zeroPad: 4, prefix: 'move/move', suffix: '.png'}),
+            repeat: -1,
+            frameRate: 12
+        })
+
+        this.anims.create({
+            key: 'idle',
+            frames: this.anims.generateFrameNames('tractorAnimations', {start: 1, end: 1, zeroPad: 4, prefix: 'idle/idle', suffix: '.png'}),
+            repeat: -1,
+            frameRate: 12
+        })
 
         // this.addCartesianPlayer();
         this.createLayers();
         this.addGroundTiles();
         this.addObjectTiles();
+        this.addPlayer();
+
+        this.physics.add.overlap(this.logicPlayer, this.collisionGroup, this.handlePlayerCollision, null, this);
+    }
+
+    private handlePlayerCollision(player: any, object: any) {
+        console.log('collision');
+        const index = object.data.get('cartesianIndex');
+        if (object) {
+            object.destroy();
+            const displayObject = this.renderObjectsLayer.getChildren().filter((child: IsoImage) => {
+                if (child.name === 'tractor') {
+                    return false;
+                }
+
+                return child.getCartesianPointIndex() === index;
+            });
+            if (displayObject) {
+                displayObject[0].destroy()
+            }
+        }
     }
 
 
@@ -60,7 +111,7 @@ export class TileScene extends Phaser.Scene {
 
     private createLayers() {
         this.groundLayer = this.add.layer();
-        this.objectsLayer = this.add.layer();
+        this.renderObjectsLayer = this.add.layer();
     }
 
     private updateCartesianTilePoints() {
@@ -77,25 +128,25 @@ export class TileScene extends Phaser.Scene {
 
 
             if (point.x < resetPointMinXCart) {
-                const offset = resetPointMinXCart - point.x;
+                const offset = Math.floor(resetPointMinXCart - point.x);
                 const newPointX = this.TILEMAP_SIZE * this.TILE_SIZE
                 point.x = newPointX - offset;
             }
 
             if (point.x > resetPointMaxXCart) {
-                const offset = resetPointMaxXCart - point.x;
+                const offset = Math.floor(resetPointMaxXCart - point.x);
                 const newPointX = 0;
                 point.x = newPointX - offset;
             }
 
             if (point.y < resetPointMinYCart) {
-                const offset = resetPointMinYCart - point.y;
+                const offset = Math.floor(resetPointMinYCart - point.y);
                 const newPointY = this.TILEMAP_SIZE * this.TILE_SIZE;
                 point.y = newPointY - offset;
             }
 
             if (point.y > resetPointMaxYCart) {
-                const offset = resetPointMaxYCart - point.y;
+                const offset = Math.floor(resetPointMaxYCart - point.y);
                 const newPointY = 0;
                 point.y = newPointY - offset;
             }
@@ -103,21 +154,21 @@ export class TileScene extends Phaser.Scene {
         });
     }
 
-    private addCartesianPlayer() {
-        this.add.rectangle(this.playerPosition.x, this.playerPosition.y, 64, 64, 0x00ff00);
+    private updateLogic() {
+        this.collisionGroup.getChildren().forEach((object) => {
+            const coordinate = this.cartesianPoints[object.data.get('cartesianIndex')];
+            const body = object.body as Phaser.Physics.Arcade.Body;
+            body.x = coordinate.x;
+            body.y = coordinate.y;
+        });
     }
 
     private addGroundTiles() {
         this.cartesianPoints.forEach((point) => {
-            const texture = Phaser.Math.RND.pick(['ground', 'grass']);
+            const texture = Phaser.Math.RND.pick(['ground_2', 'ground_1']);
             const isoPoint = this.cartesianToIsometric(point);
             this.groundLayer.add(this.make.image({x: (isoPoint.x - 32), y: (isoPoint.y - 18), key: texture}))
         });
-
-        this.player = new IsoImage({scene: this, x: this.playerPosition.x - 50, y: this.playerPosition.y - 50, texture: 'tractor'}, -1);
-
-        // Player
-        this.objectsLayer.add(this.player);
     }
 
     /**
@@ -128,27 +179,70 @@ export class TileScene extends Phaser.Scene {
         const seed = (this.TILEMAP_SIZE * this.TILEMAP_SIZE).toString();
         Phaser.Math.RND.sow([seed]);
 
-        const numberOfRandomIndices = 50;
-        const originalArray = this.cartesianPoints;
-        const randomIndicesArray = [];
+        const numberOfRandomIndices = 25;
+        const originalArray = this.cartesianPoints.slice();
+        const randomIndicesArray: number[] = [];
 
         for (let i = 0; i < numberOfRandomIndices; i++) {
             const randomIndex = Phaser.Math.RND.integerInRange(0, originalArray.length - 1);
-            randomIndicesArray.push(randomIndex);
+            originalArray.splice(randomIndex, 1);
+            if (randomIndicesArray.indexOf(randomIndex) === -1) {
+                randomIndicesArray.push(randomIndex);
+            }
         }
-
+        console.log(randomIndicesArray);
         return randomIndicesArray;
     }
 
     private addObjectTiles() {
-
+        // Tiles to be populated...
         const objectPositionIndices = this.getRandomCartesianPoints();
+
+
         objectPositionIndices.forEach((index) => {
+            // Create logic representation
+
+            const logicObject = this.physics.add.image(this.cartesianPoints[index].x, this.cartesianPoints[index].y, 'cartDebugObject');
+            logicObject.setDataEnabled();
+            logicObject.data.set('cartesianIndex', index);
+            const body = logicObject.body as Phaser.Physics.Arcade.Body;
+            body.setSize(64, 64);
+            logicObject.alpha = 0.2;
+            this.collisionGroup.add(logicObject);
+
+            // Create render representation
             const isoPoint = this.cartesianToIsometric(this.cartesianPoints[index]);
-            const object = new IsoImage({scene: this, x: (isoPoint.x - 32), y: (isoPoint.y - 32), texture: 'corn'}, index);
-            this.objectsLayer.add(object);
+            const renderObject = new IsoImage({scene: this, x: (isoPoint.x - 32), y: (isoPoint.y - 32), texture: 'corn'}, index);
+            this.renderObjectsLayer.add(renderObject);
         });
     }
+
+    private addPlayer() {
+        const ROW = 10;
+        const DEPTH = 10;
+        const cartPlayerPosition = this.cartesianPoints[(ROW * 40) + ROW + DEPTH];
+
+        this.logicPlayer = this.physics.add.image(cartPlayerPosition.x + 32, cartPlayerPosition.y + 32, 'cartDebugPlayer');
+
+        const body = this.logicPlayer.body as Phaser.Physics.Arcade.Body;
+        body.setSize(64, 64);
+//        body.x = cartPlayerPosition.x;
+//        body.y = cartPlayerPosition.y;
+
+        this.physics.add.existing(this.logicPlayer);
+
+        const renderPlayerPosition = this.cartesianToIsometric(cartPlayerPosition);
+
+        const x = (5 * 64) + (renderPlayerPosition.x);
+        const y = (renderPlayerPosition.y - 18);
+
+        this.renderPlayer = new Sprite(this, x, y, 'tractorAnimations', 'idle/idle0001.png');
+        this.renderPlayer.name = 'tractor';
+
+        // this.renderPlayer = new IsoImage({scene: this, x: (5 * 64) + (renderPlayerPosition.x), y: (renderPlayerPosition.y - 18), texture: 'tractor'}, -1);
+        this.renderObjectsLayer.add(this.renderPlayer);
+    }
+
 
     private updateInput() {
 
@@ -158,65 +252,62 @@ export class TileScene extends Phaser.Scene {
 
             if (this.cursors.up.isDown) {
                 this.moveDir.y = -1;
-                this.player.scaleX = -1;
+                this.facing = -1;
+                this.renderPlayer.scaleX = -1;
+
+                this.renderPlayer.play('move', true);
             }
 
             if (this.cursors.down.isDown) {
                 this.moveDir.y = 1;
-                this.player.scaleX = -1;
+                this.facing = -1;
+                this.renderPlayer.scaleX = -1;
+
+                this.renderPlayer.play('move', true);
             }
 
             if (this.cursors.left.isDown) {
                 this.moveDir.x = 1;
-                this.player.scaleX = 1;
+                this.facing = 1;
+                this.renderPlayer.scaleX = 1;
+
+                this.renderPlayer.play('move', true);
             }
 
             if (this.cursors.right.isDown) {
                 this.moveDir.x = -1;
-                this.player.scaleX = 1;
+                this.facing = 1;
+                this.renderPlayer.scaleX = 1;
+
+                this.renderPlayer.play('move', true);
+            }
+
+            if (this.moveDir.x === 0 && this.moveDir.y === 0) {
+                this.renderPlayer.play('idle', true);
             }
         }
     }
 
-    update() {
+    update(time: number, delta: number) {
         this.updateInput();
         this.updateCartesianTilePoints();
+        this.updateLogic();
+
         // this.debugPoints();
         this.depthSortIsometrics();
-        this.renderIsometric();
-    }
-
-    private debugPoints() {
-        this.graphics.clear();
-        this.cartesianPoints.forEach((point) => {
-            this.graphics.fillPointShape(point, 4);
-
-            const dist = Phaser.Math.Distance.BetweenPoints(this.playerPosition, point);
-
-            // Define your minimum and maximum distances for alpha interpolation
-            let minDistance = 100; // Adjust this based on your needs
-            let maxDistance = 300; // Adjust this based on your needs
-
-            // Interpolate the alpha value based on the distance
-            let normalizedDistance = Phaser.Math.Clamp((dist - minDistance) / (maxDistance - minDistance), 0, 1);
-            let interpolatedAlpha = 1 - normalizedDistance;
-
-            this.graphics.fillStyle(0xff0000, interpolatedAlpha);
-
-            this.graphics.fillRect(point.x - this.TILE_SIZE * .5, point.y - this.TILE_SIZE * .5, this.TILE_SIZE, this.TILE_SIZE);
-        });
+        this.renderIsometric(delta);
     }
 
     private cartesianToIsometric(cartPt: Phaser.Geom.Point) {
         const tempPt = new Phaser.Geom.Point(0, 0);
-        tempPt.x = (cartPt.x - cartPt.y) / 2;
-        tempPt.y = (cartPt.x + cartPt.y) / 4;
+        tempPt.x = Math.floor((cartPt.x - cartPt.y) / 2);
+        tempPt.y = Math.floor((cartPt.x + cartPt.y) / 4);
         return tempPt;
     }
 
 
     private depthSortIsometrics() {
-        this.objectsLayer.sort('y', function(a : any, b : any) {
+        this.renderObjectsLayer.sort('y', function (a: any, b: any) {
             if (a.y < b.y) {
                 return -1;
             }
@@ -228,7 +319,7 @@ export class TileScene extends Phaser.Scene {
 
     };
 
-    private renderIsometric() {
+    private renderIsometric(delta: number) {
         // this.graphics.clear();
         this.cartesianPoints.forEach((point, i) => {
             // ground
@@ -239,11 +330,11 @@ export class TileScene extends Phaser.Scene {
         });
 
         // Update objects
-        this.objectsLayer.getChildren().forEach((object) => {
+        this.renderObjectsLayer.getChildren().forEach((object) => {
             const isoImage = object as IsoImage;
 
             // do not apply coordinates to the player
-            if(isoImage.texture.key === 'tractor') {
+            if (isoImage.name === 'tractor') {
                 return;
             }
 
@@ -252,7 +343,15 @@ export class TileScene extends Phaser.Scene {
             isoImage.y = (isoPoint.y - 18);
         });
 
-
+        if (this.moveDir.x === 0 && this.moveDir.y === 0) {
+            {
+            }
+            this.renderPlayer.scaleX = this.facing + (0.05 * Math.sin(this.time.now / 1000));
+            this.renderPlayer.scaleY = 1 + (0.12 * Math.sin(this.time.now / 1000));
+        } else {
+            this.renderPlayer.scaleX = this.facing + (0.05 * Math.sin(this.time.now / 100));
+            this.renderPlayer.scaleY = 1 + (0.08 * Math.sin(this.time.now / 100));
+        }
 
     }
 }
