@@ -39,6 +39,8 @@ export class TileScene extends Phaser.Scene {
     private audioTractorEngine: Phaser.Sound.HTML5AudioSound | Phaser.Sound.WebAudioSound | Phaser.Sound.NoAudioSound;
     private audioHarversting: Phaser.Sound.HTML5AudioSound | Phaser.Sound.WebAudioSound | Phaser.Sound.NoAudioSound;
 
+    private particleEmitterCrops: Phaser.GameObjects.Particles.ParticleEmitter;
+
     constructor() {
         super({key: 'TileScene'});
     }
@@ -55,7 +57,6 @@ export class TileScene extends Phaser.Scene {
         this.load.audio('backgroundTheme', ['../assets/audio/backgroundTheme01.mp3', '../assets/audio/backgroundTheme01.ogg']);
         this.load.audio('tractorEngine', ['../assets/audio/tractorEngine01.mp3', '../assets/audio/tractorEngine01.ogg']);
         this.load.audio('harvesting', ['../assets/audio/harvesting01.mp3', '../assets/audio/harvesting01.ogg']);
-
     }
 
     create(): void {
@@ -72,6 +73,18 @@ export class TileScene extends Phaser.Scene {
         this.addGroundTiles();
         this.addObjectTiles();
         this.addPlayer();
+
+        // add particle emitter
+        this.particleEmitterCrops = this.add.particles(0, 0, 'gameAssets', {
+            frame: 'object/cropParticle.png',
+            lifespan: 500,
+            speed: {min: 50, max: 100},
+            scale: {start: 0.1, end: 1},
+            rotate: {start: 0, end: 180},
+            alpha: {start: 1, end: 0},
+            gravityY: 4,
+            emitting: false
+        });
 
         this.physics.add.overlap(this.logicPlayer, this.collisionGroup, this.handlePlayerCollision, null, this);
     }
@@ -90,6 +103,7 @@ export class TileScene extends Phaser.Scene {
             repeat: -1,
             frameRate: 12
         })
+
     }
 
     private createAudio() {
@@ -114,7 +128,9 @@ export class TileScene extends Phaser.Scene {
             });
             if (displayObject) {
                 displayObject[0].destroy()
-                this.audioHarversting.play()
+                this.audioHarversting.play();
+                const treatAsImage = displayObject[0] as Image;
+                this.particleEmitterCrops.emitParticleAt(treatAsImage.x, treatAsImage.y, 10);
             }
         }
     }
