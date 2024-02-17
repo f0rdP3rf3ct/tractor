@@ -35,6 +35,10 @@ export class TileScene extends Phaser.Scene {
 
     private facing = 1;
 
+    // Audio
+    private audioTractorEngine: Phaser.Sound.HTML5AudioSound | Phaser.Sound.WebAudioSound | Phaser.Sound.NoAudioSound;
+    private audioHarversting: Phaser.Sound.HTML5AudioSound | Phaser.Sound.WebAudioSound | Phaser.Sound.NoAudioSound;
+
     constructor() {
         super({key: 'TileScene'});
     }
@@ -44,7 +48,14 @@ export class TileScene extends Phaser.Scene {
         this.load.image('cartDebugObject', '../assets/cartDebugObject.png');
         this.load.image('cartDebugPlayer', '../assets/cartDebugPlayer.png');
 
+        // sprites
         this.load.atlas(this.SPRITE_SHEET_KEY, '../assets/spritesheets/gameAssets.png', '../assets/spritesheets/gameAssets.json');
+
+        // audio
+        this.load.audio('backgroundTheme', ['../assets/audio/backgroundTheme01.mp3', '../assets/audio/backgroundTheme01.ogg']);
+        this.load.audio('tractorEngine', ['../assets/audio/tractorEngine01.mp3', '../assets/audio/tractorEngine01.ogg']);
+        this.load.audio('harvesting', ['../assets/audio/harvesting01.mp3', '../assets/audio/harvesting01.ogg']);
+
     }
 
     create(): void {
@@ -52,6 +63,7 @@ export class TileScene extends Phaser.Scene {
         this.collisionGroup = this.physics.add.group();
 
         this.createAnimations();
+        this.createAudio();
 
         this.createCartesianTilePoints();
         this.updateCartesianTilePoints();
@@ -80,6 +92,14 @@ export class TileScene extends Phaser.Scene {
         })
     }
 
+    private createAudio() {
+        const backgroundTheme = this.sound.add('backgroundTheme', {loop: true});
+        backgroundTheme.play();
+
+        this.audioTractorEngine = this.sound.add('tractorEngine', {loop: true});
+        this.audioHarversting = this.sound.add('harvesting', {loop: false});
+    }
+
     private handlePlayerCollision(player: any, object: any) {
         console.log('collision');
         const index = object.data.get('cartesianIndex');
@@ -94,6 +114,7 @@ export class TileScene extends Phaser.Scene {
             });
             if (displayObject) {
                 displayObject[0].destroy()
+                this.audioHarversting.play()
             }
         }
     }
@@ -159,6 +180,21 @@ export class TileScene extends Phaser.Scene {
             body.x = coordinate.x;
             body.y = coordinate.y;
         });
+    }
+
+    private updateAudio() {
+        if (this.moveDir.x === 0 && this.moveDir.y === 0) {
+            this.audioTractorEngine.setVolume(0.3);
+            this.audioTractorEngine.applyConfig();
+        } else {
+            this.audioTractorEngine.setVolume(0.7);
+            this.audioTractorEngine.applyConfig();
+        }
+
+        if (!this.audioTractorEngine.isPlaying) {
+            this.audioTractorEngine.play();
+        }
+
     }
 
     private addGroundTiles() {
@@ -290,6 +326,7 @@ export class TileScene extends Phaser.Scene {
         this.updateInput();
         this.updateCartesianTilePoints();
         this.updateLogic();
+        this.updateAudio();
 
         // this.debugPoints();
         this.depthSortIsometrics();
