@@ -51,10 +51,10 @@ export class LoadingScene extends Phaser.Scene {
             percentText.destroy();
         });
 
+        this.loadAssets();
     }
 
     private loadAssets() {
-
         // sprites
         this.load.atlas(TileScene.SPRITE_SHEET_KEY, '../assets/spritesheets/gameAssets.png', '../assets/spritesheets/gameAssets.json');
 
