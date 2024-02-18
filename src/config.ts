@@ -1,5 +1,5 @@
-import { MainScene } from './scenes/main-scene';
 import {TileScene} from "./scenes/tile-scene";
+import {LoadingScene} from "./scenes/loading-scene";
 
 export const GameConfig: Phaser.Types.Core.GameConfig = {
   type: Phaser.AUTO,
@@ -7,7 +7,7 @@ export const GameConfig: Phaser.Types.Core.GameConfig = {
   height: 600,
   backgroundColor: '#fbff66',
   parent: 'game',
-  scene: [TileScene],
+  scene: [LoadingScene, TileScene],
   physics: {
     default: 'arcade',
     arcade: {

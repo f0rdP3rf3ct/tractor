@@ -7,15 +7,13 @@ import Sprite = Phaser.GameObjects.Sprite;
 export class TileScene extends Phaser.Scene {
 
     private TILEMAP_SIZE = 40;
+
     private TILE_SIZE = 64;
-    private PLAYER_START_POSITION = {x: 400, y: 300};
+
+    static SPRITE_SHEET_KEY = 'gameAssets';
 
     // px / ms
     private MOVE_SPEED = 5;
-
-    private SPRITE_SHEET_KEY = 'gameAssets';
-
-    private playerPosition = {...this.PLAYER_START_POSITION}
 
     private cursors: CursorKeys;
 
@@ -49,14 +47,6 @@ export class TileScene extends Phaser.Scene {
         // debug
         this.load.image('cartDebugObject', '../assets/cartDebugObject.png');
         this.load.image('cartDebugPlayer', '../assets/cartDebugPlayer.png');
-
-        // sprites
-        this.load.atlas(this.SPRITE_SHEET_KEY, '../assets/spritesheets/gameAssets.png', '../assets/spritesheets/gameAssets.json');
-
-        // audio
-        this.load.audio('backgroundTheme', ['../assets/audio/backgroundTheme01.mp3', '../assets/audio/backgroundTheme01.ogg']);
-        this.load.audio('tractorEngine', ['../assets/audio/tractorEngine01.mp3', '../assets/audio/tractorEngine01.ogg']);
-        this.load.audio('harvesting', ['../assets/audio/harvesting01.mp3', '../assets/audio/harvesting01.ogg']);
     }
 
     create(): void {
@@ -92,14 +82,14 @@ export class TileScene extends Phaser.Scene {
     private createAnimations() {
         this.anims.create({
             key: 'move',
-            frames: this.anims.generateFrameNames(this.SPRITE_SHEET_KEY, {start: 1, end: 6, zeroPad: 4, prefix: 'move/move', suffix: '.png'}),
+            frames: this.anims.generateFrameNames(TileScene.SPRITE_SHEET_KEY, {start: 1, end: 6, zeroPad: 4, prefix: 'move/move', suffix: '.png'}),
             repeat: -1,
             frameRate: 12
         })
 
         this.anims.create({
             key: 'idle',
-            frames: this.anims.generateFrameNames(this.SPRITE_SHEET_KEY, {start: 1, end: 1, zeroPad: 4, prefix: 'idle/idle_front_', suffix: '.png'}),
+            frames: this.anims.generateFrameNames(TileScene.SPRITE_SHEET_KEY, {start: 1, end: 1, zeroPad: 4, prefix: 'idle/idle_front_', suffix: '.png'}),
             repeat: -1,
             frameRate: 12
         })
@@ -217,7 +207,7 @@ export class TileScene extends Phaser.Scene {
         this.cartesianPoints.forEach((point) => {
             const frame = Phaser.Math.RND.pick(['object/ground_2.png', 'object/ground_1.png']);
             const isoPoint = this.cartesianToIsometric(point);
-            this.groundLayer.add(this.make.image({x: (isoPoint.x - 32), y: (isoPoint.y - 18), key: this.SPRITE_SHEET_KEY, frame: frame}))
+            this.groundLayer.add(this.make.image({x: (isoPoint.x - 32), y: (isoPoint.y - 18), key: TileScene.SPRITE_SHEET_KEY, frame: frame}))
         });
     }
 
@@ -262,7 +252,7 @@ export class TileScene extends Phaser.Scene {
 
             // Create render representation
             const isoPoint = this.cartesianToIsometric(this.cartesianPoints[index]);
-            const renderObject = new IsoImage({scene: this, x: (isoPoint.x - 32), y: (isoPoint.y - 32), texture: this.SPRITE_SHEET_KEY, frame: 'object/cornfield.png'}, index);
+            const renderObject = new IsoImage({scene: this, x: (isoPoint.x - 32), y: (isoPoint.y - 32), texture: TileScene.SPRITE_SHEET_KEY, frame: 'object/cornfield.png'}, index);
             this.renderObjectsLayer.add(renderObject);
         });
     }
@@ -286,7 +276,7 @@ export class TileScene extends Phaser.Scene {
         const x = (5 * 64) + (renderPlayerPosition.x);
         const y = (renderPlayerPosition.y - 18);
 
-        this.renderPlayer = new Sprite(this, x, y, this.SPRITE_SHEET_KEY, 'idle/idle_front_0001.png');
+        this.renderPlayer = new Sprite(this, x, y, TileScene.SPRITE_SHEET_KEY, 'idle/idle_front_0001.png');
         this.renderPlayer.name = 'tractor';
 
         // this.renderPlayer = new IsoImage({scene: this, x: (5 * 64) + (renderPlayerPosition.x), y: (renderPlayerPosition.y - 18), texture: 'tractor'}, -1);
