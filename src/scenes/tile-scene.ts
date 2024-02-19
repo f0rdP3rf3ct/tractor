@@ -1,43 +1,50 @@
 import CursorKeys = Phaser.Types.Input.Keyboard.CursorKeys;
 import {IsoImage} from "../objects/isoImage";
 import Image = Phaser.GameObjects.Image;
-import Point = Phaser.Geom.Point;
 import Sprite = Phaser.GameObjects.Sprite;
+import Point = Phaser.Geom.Point;
+import Layer = Phaser.GameObjects.Layer;
+import Group = Phaser.Physics.Arcade.Group;
+import HTML5AudioSound = Phaser.Sound.HTML5AudioSound;
+import NoAudioSound = Phaser.Sound.NoAudioSound;
+import WebAudioSound = Phaser.Sound.WebAudioSound;
+import ParticleEmitter = Phaser.GameObjects.Particles.ParticleEmitter;
 
 export class TileScene extends Phaser.Scene {
 
-    private TILEMAP_SIZE = 40;
+    static SPRITE_SHEET_KEY = 'gameAssets';
+
+    private TILEMAP_SIZE = 20;
 
     private TILE_SIZE = 64;
 
-    static SPRITE_SHEET_KEY = 'gameAssets';
-
     // px / ms
-    private MOVE_SPEED = 5;
+    private MOVE_SPEED = 0.1;
 
     private cursors: CursorKeys;
 
     private moveDir = {x: 0, y: 0};
 
-    private cartesianPoints: Phaser.Geom.Point[] = [];
+    private cartesianPoints: Point[] = [];
 
-    private logicPlayer: Phaser.GameObjects.Image;
+    private logicPlayer: Image;
 
-    private renderPlayer: Phaser.GameObjects.Sprite;
+    private renderPlayer: Sprite;
 
-    private groundLayer: Phaser.GameObjects.Layer;
+    private groundLayer: Layer;
 
-    private renderObjectsLayer: Phaser.GameObjects.Layer;
+    private renderObjectsLayer: Layer;
 
-    private collisionGroup: Phaser.Physics.Arcade.Group;
+    private collisionGroup: Group;
 
-    private facing = 1;
+    private playerFacingDir = 1;
 
     // Audio
-    private audioTractorEngine: Phaser.Sound.HTML5AudioSound | Phaser.Sound.WebAudioSound | Phaser.Sound.NoAudioSound;
-    private audioHarversting: Phaser.Sound.HTML5AudioSound | Phaser.Sound.WebAudioSound | Phaser.Sound.NoAudioSound;
+    private audioTractorEngine: HTML5AudioSound | WebAudioSound | NoAudioSound;
+    private audioHarvesting: HTML5AudioSound | WebAudioSound | NoAudioSound;
 
-    private particleEmitterCrops: Phaser.GameObjects.Particles.ParticleEmitter;
+    // Particles
+    private particleEmitterCrops: ParticleEmitter;
 
     constructor() {
         super({key: 'TileScene'});
@@ -93,7 +100,6 @@ export class TileScene extends Phaser.Scene {
             repeat: -1,
             frameRate: 12
         })
-
     }
 
     private createAudio() {
@@ -101,11 +107,10 @@ export class TileScene extends Phaser.Scene {
         backgroundTheme.play();
 
         this.audioTractorEngine = this.sound.add('tractorEngine', {loop: true});
-        this.audioHarversting = this.sound.add('harvesting', {loop: false});
+        this.audioHarvesting = this.sound.add('harvesting', {loop: false});
     }
 
     private handlePlayerCollision(player: any, object: any) {
-        console.log('collision');
         const index = object.data.get('cartesianIndex');
         if (object) {
             object.destroy();
@@ -118,18 +123,17 @@ export class TileScene extends Phaser.Scene {
             });
             if (displayObject) {
                 displayObject[0].destroy()
-                this.audioHarversting.play();
+                this.audioHarvesting.play();
                 const treatAsImage = displayObject[0] as Image;
                 this.particleEmitterCrops.emitParticleAt(treatAsImage.x, treatAsImage.y, 10);
             }
         }
     }
 
-
     private createCartesianTilePoints() {
-        for (let x = 0; x <= this.TILEMAP_SIZE * this.TILE_SIZE; x += this.TILE_SIZE) {
-            for (let y = 0; y <= this.TILEMAP_SIZE * this.TILE_SIZE; y += this.TILE_SIZE) {
-                this.cartesianPoints.push(new Phaser.Geom.Point(x, y));
+        for (let x = 0; x <= this.TILEMAP_SIZE; x++) {
+            for (let y = 0; y <= this.TILEMAP_SIZE; y++) {
+                this.cartesianPoints.push(new Point(x, y));
             }
         }
     }
@@ -141,37 +145,38 @@ export class TileScene extends Phaser.Scene {
 
     private updateCartesianTilePoints() {
 
-        this.cartesianPoints.forEach((point) => {
-            point.x += this.moveDir.x * this.MOVE_SPEED;
-            point.y += this.moveDir.y * this.MOVE_SPEED;
+        this.cartesianPoints.forEach((inPoint) => {
+            const point = inPoint;
+
+            point.x += (this.moveDir.x * this.MOVE_SPEED);
+            point.y += (this.moveDir.y * this.MOVE_SPEED);
 
             const resetPointMinXCart = 0;
-            const resetPointMaxXCart = this.TILEMAP_SIZE * this.TILE_SIZE
+            const resetPointMaxXCart = this.TILEMAP_SIZE
 
             const resetPointMinYCart = 0;
-            const resetPointMaxYCart = this.TILEMAP_SIZE * this.TILE_SIZE;
-
+            const resetPointMaxYCart = this.TILEMAP_SIZE;
 
             if (point.x < resetPointMinXCart) {
-                const offset = Math.floor(resetPointMinXCart - point.x);
-                const newPointX = this.TILEMAP_SIZE * this.TILE_SIZE
+                const offset = resetPointMinXCart - point.x;
+                const newPointX = this.TILEMAP_SIZE;
                 point.x = newPointX - offset;
             }
 
             if (point.x > resetPointMaxXCart) {
-                const offset = Math.floor(resetPointMaxXCart - point.x);
+                const offset = resetPointMaxXCart - point.x;
                 const newPointX = 0;
                 point.x = newPointX - offset;
             }
 
             if (point.y < resetPointMinYCart) {
-                const offset = Math.floor(resetPointMinYCart - point.y);
-                const newPointY = this.TILEMAP_SIZE * this.TILE_SIZE;
+                const offset = resetPointMinYCart - point.y;
+                const newPointY = this.TILEMAP_SIZE;
                 point.y = newPointY - offset;
             }
 
             if (point.y > resetPointMaxYCart) {
-                const offset = Math.floor(resetPointMaxYCart - point.y);
+                const offset = resetPointMaxYCart - point.y;
                 const newPointY = 0;
                 point.y = newPointY - offset;
             }
@@ -179,12 +184,16 @@ export class TileScene extends Phaser.Scene {
         });
     }
 
+    private getCartTilePosition(point: Point) {
+        return new Point(point.x * this.TILE_SIZE, point.y * this.TILE_SIZE);
+    }
+
     private updateLogic() {
         this.collisionGroup.getChildren().forEach((object) => {
-            const coordinate = this.cartesianPoints[object.data.get('cartesianIndex')];
+            const cartTilePosition = this.getCartTilePosition(this.cartesianPoints[object.data.get('cartesianIndex')]);
             const body = object.body as Phaser.Physics.Arcade.Body;
-            body.x = coordinate.x;
-            body.y = coordinate.y;
+            body.x = cartTilePosition.x;
+            body.y = cartTilePosition.y;
         });
     }
 
@@ -204,7 +213,8 @@ export class TileScene extends Phaser.Scene {
     }
 
     private addGroundTiles() {
-        this.cartesianPoints.forEach((point) => {
+        this.cartesianPoints.forEach((inPoint) => {
+            const point = this.getCartTilePosition(inPoint);
             const frame = Phaser.Math.RND.pick(['object/ground_2.png', 'object/ground_1.png']);
             const isoPoint = this.cartesianToIsometric(point);
             this.groundLayer.add(this.make.image({x: (isoPoint.x - 32), y: (isoPoint.y - 18), key: TileScene.SPRITE_SHEET_KEY, frame: frame}))
@@ -230,7 +240,7 @@ export class TileScene extends Phaser.Scene {
                 randomIndicesArray.push(randomIndex);
             }
         }
-        console.log(randomIndicesArray);
+
         return randomIndicesArray;
     }
 
@@ -238,42 +248,54 @@ export class TileScene extends Phaser.Scene {
         // Tiles to be populated...
         const objectPositionIndices = this.getRandomCartesianPoints();
 
-
         objectPositionIndices.forEach((index) => {
             // Create logic representation
-
-            const logicObject = this.physics.add.image(this.cartesianPoints[index].x, this.cartesianPoints[index].y, 'cartDebugObject');
+            const point = this.getCartTilePosition(this.cartesianPoints[index]);
+            const logicObject = this.physics.add.image(point.x, point.y, 'cartDebugObject');
             logicObject.setDataEnabled();
             logicObject.data.set('cartesianIndex', index);
             const body = logicObject.body as Phaser.Physics.Arcade.Body;
             body.setSize(64, 64);
-            logicObject.alpha = 0.2;
+            logicObject.alpha = 0;
             this.collisionGroup.add(logicObject);
 
             // Create render representation
-            const isoPoint = this.cartesianToIsometric(this.cartesianPoints[index]);
+            const isoPoint = this.cartesianToIsometric(point);
             const renderObject = new IsoImage({scene: this, x: (isoPoint.x - 32), y: (isoPoint.y - 32), texture: TileScene.SPRITE_SHEET_KEY, frame: 'object/cornfield.png'}, index);
             this.renderObjectsLayer.add(renderObject);
         });
+
+    }
+
+    private getTileCenter(): Point {
+        let totalX = 0;
+        let totalY = 0;
+
+        for (var i = 0; i < this.cartesianPoints.length; i++) {
+            totalX += this.cartesianPoints[i].x;
+            totalY += this.cartesianPoints[i].y;
+        }
+
+        const averageX = totalX / this.cartesianPoints.length;
+        const averageY = totalY / this.cartesianPoints.length;
+
+        return new Point(averageX, averageY);
     }
 
     private addPlayer() {
-        const ROW = 10;
-        const DEPTH = 10;
-        const cartPlayerPosition = this.cartesianPoints[(ROW * 40) + ROW + DEPTH];
+        const cartPlayerPosition = this.getCartTilePosition(this.getTileCenter());
 
-        this.logicPlayer = this.physics.add.image(cartPlayerPosition.x + 32, cartPlayerPosition.y + 32, 'cartDebugPlayer');
+        this.logicPlayer = this.physics.add.image(cartPlayerPosition.x, cartPlayerPosition.y, 'cartDebugPlayer');
+        this.logicPlayer.alpha = 0.2;
 
         const body = this.logicPlayer.body as Phaser.Physics.Arcade.Body;
         body.setSize(64, 64);
-//        body.x = cartPlayerPosition.x;
-//        body.y = cartPlayerPosition.y;
 
         this.physics.add.existing(this.logicPlayer);
 
         const renderPlayerPosition = this.cartesianToIsometric(cartPlayerPosition);
 
-        const x = (5 * 64) + (renderPlayerPosition.x);
+        const x = 400 + renderPlayerPosition.x;
         const y = (renderPlayerPosition.y - 18);
 
         this.renderPlayer = new Sprite(this, x, y, TileScene.SPRITE_SHEET_KEY, 'idle/idle_front_0001.png');
@@ -292,7 +314,7 @@ export class TileScene extends Phaser.Scene {
 
             if (this.cursors.up.isDown) {
                 this.moveDir.y = -1;
-                this.facing = -1;
+                this.playerFacingDir = -1;
                 this.renderPlayer.scaleX = -1;
 
                 this.renderPlayer.play('move', true);
@@ -300,7 +322,7 @@ export class TileScene extends Phaser.Scene {
 
             if (this.cursors.down.isDown) {
                 this.moveDir.y = 1;
-                this.facing = -1;
+                this.playerFacingDir = -1;
                 this.renderPlayer.scaleX = -1;
 
                 this.renderPlayer.play('move', true);
@@ -308,7 +330,7 @@ export class TileScene extends Phaser.Scene {
 
             if (this.cursors.left.isDown) {
                 this.moveDir.x = 1;
-                this.facing = 1;
+                this.playerFacingDir = 1;
                 this.renderPlayer.scaleX = 1;
 
                 this.renderPlayer.play('move', true);
@@ -316,7 +338,7 @@ export class TileScene extends Phaser.Scene {
 
             if (this.cursors.right.isDown) {
                 this.moveDir.x = -1;
-                this.facing = 1;
+                this.playerFacingDir = 1;
                 this.renderPlayer.scaleX = 1;
 
                 this.renderPlayer.play('move', true);
@@ -339,8 +361,8 @@ export class TileScene extends Phaser.Scene {
         this.renderIsometric(delta);
     }
 
-    private cartesianToIsometric(cartPt: Phaser.Geom.Point) {
-        const tempPt = new Phaser.Geom.Point(0, 0);
+    private cartesianToIsometric(cartPt: Point) {
+        const tempPt = new Point(0, 0);
         tempPt.x = Math.floor((cartPt.x - cartPt.y) / 2);
         tempPt.y = Math.floor((cartPt.x + cartPt.y) / 4);
         return tempPt;
@@ -362,11 +384,13 @@ export class TileScene extends Phaser.Scene {
 
     private renderIsometric(delta: number) {
         // this.graphics.clear();
-        this.cartesianPoints.forEach((point, i) => {
+        this.cartesianPoints.forEach((inPoint, i) => {
+            const point = this.getCartTilePosition(inPoint);
             // ground
             const isoPoint = this.cartesianToIsometric(point);
             const groundTile = this.groundLayer.getChildren()[i] as Phaser.GameObjects.Image;
-            groundTile.x = (5 * 64) + isoPoint.x;
+            // groundTile.x = (5 * 64) + isoPoint.x;
+            groundTile.x = 400 + isoPoint.x;
             groundTile.y = isoPoint.y;
         });
 
@@ -379,18 +403,18 @@ export class TileScene extends Phaser.Scene {
                 return;
             }
 
-            const isoPoint = this.cartesianToIsometric(this.cartesianPoints[isoImage.getCartesianPointIndex()]);
-            isoImage.x = (5 * 64) + (isoPoint.x);
+            const point = this.getCartTilePosition(this.cartesianPoints[isoImage.getCartesianPointIndex()]);
+
+            const isoPoint = this.cartesianToIsometric(point);
+            isoImage.x = 400 + isoPoint.x;
             isoImage.y = (isoPoint.y - 18);
         });
 
         if (this.moveDir.x === 0 && this.moveDir.y === 0) {
-            {
-            }
-            this.renderPlayer.scaleX = this.facing + (0.05 * Math.sin(this.time.now / 1000));
+            this.renderPlayer.scaleX = this.playerFacingDir + (0.05 * Math.sin(this.time.now / 1000));
             this.renderPlayer.scaleY = 1 + (0.12 * Math.sin(this.time.now / 1000));
         } else {
-            this.renderPlayer.scaleX = this.facing + (0.05 * Math.sin(this.time.now / 100));
+            this.renderPlayer.scaleX = this.playerFacingDir + (0.05 * Math.sin(this.time.now / 100));
             this.renderPlayer.scaleY = 1 + (0.08 * Math.sin(this.time.now / 100));
         }
 
