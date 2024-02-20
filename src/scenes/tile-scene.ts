@@ -14,7 +14,7 @@ export class TileScene extends Phaser.Scene {
 
     static SPRITE_SHEET_KEY = 'gameAssets';
 
-    private TILEMAP_SIZE = 15;
+    private TILEMAP_SIZE = 40;
 
     private TILE_SIZE = 64;
 
@@ -22,7 +22,7 @@ export class TileScene extends Phaser.Scene {
 
     private ISO_TILE_HEIGHT = 32;
 
-    private INNER_MOST_BLANKS_TILE_SIZE = 5;
+    private INNER_MOST_BLANKS_TILE_SIZE = 9;
 
     private isoGridHeight: number;
 
@@ -339,8 +339,8 @@ export class TileScene extends Phaser.Scene {
             totalY += this.cartesianPoints[i].y;
         }
 
-        const averageX = totalX / this.cartesianPoints.length;
-        const averageY = totalY / this.cartesianPoints.length;
+        const averageX = Math.floor(totalX / this.cartesianPoints.length);
+        const averageY = Math.floor(totalY / this.cartesianPoints.length);
 
         return new Point(averageX, averageY);
     }
