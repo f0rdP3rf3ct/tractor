@@ -14,9 +14,25 @@ export class TileScene extends Phaser.Scene {
 
     static SPRITE_SHEET_KEY = 'gameAssets';
 
-    private TILEMAP_SIZE = 20;
+    private TILEMAP_SIZE = 15;
 
     private TILE_SIZE = 64;
+
+    private ISO_TILE_WIDTH = 64;
+
+    private ISO_TILE_HEIGHT = 32;
+
+    private INNER_MOST_BLANKS_TILE_SIZE = 5;
+
+    private isoGridHeight: number;
+
+    private isoGridWidth: number;
+
+    /**
+     * Point to position isogrid in the center of the screen
+     * @private
+     */
+    private isoGridGlobalCenter: Point;
 
     // px / ms
     private MOVE_SPEED = 0.1;
@@ -59,6 +75,11 @@ export class TileScene extends Phaser.Scene {
     create(): void {
         this.cursors = this.input.keyboard.createCursorKeys();
         this.collisionGroup = this.physics.add.group();
+
+        this.isoGridWidth = this.TILEMAP_SIZE * this.ISO_TILE_WIDTH;
+        this.isoGridHeight = this.TILEMAP_SIZE * this.ISO_TILE_HEIGHT;
+
+        this.isoGridGlobalCenter = new Point((this.cameras.main.width * 0.5), (this.cameras.main.height * 0.5) - (this.isoGridHeight * 0.5));
 
         this.createAnimations();
         this.createAudio();
@@ -184,6 +205,36 @@ export class TileScene extends Phaser.Scene {
         });
     }
 
+    /**
+     * @private
+     */
+    private getInnerMostCartesianPoints(): Point[] {
+        const numRows = this.TILEMAP_SIZE;
+        const numCols = this.TILEMAP_SIZE;
+
+        let startX = Math.floor((numRows - this.INNER_MOST_BLANKS_TILE_SIZE) / 2);
+        let startY = Math.floor((numCols - this.INNER_MOST_BLANKS_TILE_SIZE) / 2);
+
+        let endX = startX + this.INNER_MOST_BLANKS_TILE_SIZE - 1;
+        let endY = startY + this.INNER_MOST_BLANKS_TILE_SIZE - 1;
+
+        // Ensure the calculated indices are within bounds
+        startX = Math.max(startX, 0);
+        startY = Math.max(startY, 0);
+        endX = Math.min(endX, numCols - 1);
+        endY = Math.min(endY, numRows - 1);
+
+        let innerMostPoints: Point[] = [];
+
+        for (let i = startY; i <= endY; i++) {
+            for (let j = startX; j <= endX; j++) {
+                innerMostPoints.push(new Point(j, i));
+            }
+        }
+
+        return innerMostPoints;
+    }
+
     private getCartTilePosition(point: Point) {
         return new Point(point.x * this.TILE_SIZE, point.y * this.TILE_SIZE);
     }
@@ -217,7 +268,7 @@ export class TileScene extends Phaser.Scene {
             const point = this.getCartTilePosition(inPoint);
             const frame = Phaser.Math.RND.pick(['object/ground_2.png', 'object/ground_1.png']);
             const isoPoint = this.cartesianToIsometric(point);
-            this.groundLayer.add(this.make.image({x: (isoPoint.x - 32), y: (isoPoint.y - 18), key: TileScene.SPRITE_SHEET_KEY, frame: frame}))
+            this.groundLayer.add(this.make.image({x: (isoPoint.x - this.ISO_TILE_WIDTH * 0.5), y: (isoPoint.y - this.ISO_TILE_HEIGHT * 0.5), key: TileScene.SPRITE_SHEET_KEY, frame: frame}))
         });
     }
 
@@ -248,12 +299,24 @@ export class TileScene extends Phaser.Scene {
         // Tiles to be populated...
         const objectPositionIndices = this.getRandomCartesianPoints();
 
-        objectPositionIndices.forEach((index) => {
+        const innerMostPoints = this.getInnerMostCartesianPoints();
+
+        this.cartesianPoints.forEach((inPoint, index) => {
+
+            const isInnerMost = innerMostPoints.some((innerPoint) => {
+                return innerPoint.x === inPoint.x && innerPoint.y === inPoint.y;
+            });
+
+            if (isInnerMost) {
+                return;
+            }
+
             // Create logic representation
             const point = this.getCartTilePosition(this.cartesianPoints[index]);
             const logicObject = this.physics.add.image(point.x, point.y, 'cartDebugObject');
             logicObject.setDataEnabled();
             logicObject.data.set('cartesianIndex', index);
+
             const body = logicObject.body as Phaser.Physics.Arcade.Body;
             body.setSize(64, 64);
             logicObject.alpha = 0;
@@ -295,8 +358,8 @@ export class TileScene extends Phaser.Scene {
 
         const renderPlayerPosition = this.cartesianToIsometric(cartPlayerPosition);
 
-        const x = 400 + renderPlayerPosition.x;
-        const y = (renderPlayerPosition.y - 18);
+        const x = renderPlayerPosition.x;
+        const y = renderPlayerPosition.y - this.ISO_TILE_HEIGHT * 0.5;
 
         this.renderPlayer = new Sprite(this, x, y, TileScene.SPRITE_SHEET_KEY, 'idle/idle_front_0001.png');
         this.renderPlayer.name = 'tractor';
@@ -362,9 +425,9 @@ export class TileScene extends Phaser.Scene {
     }
 
     private cartesianToIsometric(cartPt: Point) {
-        const tempPt = new Point(0, 0);
-        tempPt.x = Math.floor((cartPt.x - cartPt.y) / 2);
-        tempPt.y = Math.floor((cartPt.x + cartPt.y) / 4);
+        const tempPt = new Point(this.isoGridGlobalCenter.x, this.isoGridGlobalCenter.y);
+        tempPt.x += (Math.floor((cartPt.x - cartPt.y) / 2));
+        tempPt.y += (Math.floor((cartPt.x + cartPt.y) / 4));
         return tempPt;
     }
 
@@ -390,7 +453,7 @@ export class TileScene extends Phaser.Scene {
             const isoPoint = this.cartesianToIsometric(point);
             const groundTile = this.groundLayer.getChildren()[i] as Phaser.GameObjects.Image;
             // groundTile.x = (5 * 64) + isoPoint.x;
-            groundTile.x = 400 + isoPoint.x;
+            groundTile.x = isoPoint.x;
             groundTile.y = isoPoint.y;
         });
 
@@ -406,8 +469,8 @@ export class TileScene extends Phaser.Scene {
             const point = this.getCartTilePosition(this.cartesianPoints[isoImage.getCartesianPointIndex()]);
 
             const isoPoint = this.cartesianToIsometric(point);
-            isoImage.x = 400 + isoPoint.x;
-            isoImage.y = (isoPoint.y - 18);
+            isoImage.x = isoPoint.x;
+            isoImage.y = isoPoint.y - this.ISO_TILE_HEIGHT * 0.5;
         });
 
         if (this.moveDir.x === 0 && this.moveDir.y === 0) {
