@@ -14,6 +14,15 @@ export class TileScene extends Phaser.Scene {
 
     static SPRITE_SHEET_KEY = 'gameAssets';
 
+    // Spritesheet prefixes
+    static SPRITE_SHEET_PREFIX_TRACTOR_MOVE_FRONT = 'tractor_move/move_front_';
+    static SPRITE_SHEET_PREFIX_TRACTOR_MOVE_BACK = 'tractor_move/move_back_';
+
+    // Animation keys
+    static ANIM_KEY_TRACTOR_MOVE_FRONT = 'move_front';
+    static ANIM_KEY_TRACTOR_MOVE_BACK = 'move_back';
+
+
     private TILEMAP_SIZE = 40;
 
     private TILE_SIZE = 64;
@@ -22,6 +31,10 @@ export class TileScene extends Phaser.Scene {
 
     private ISO_TILE_HEIGHT = 32;
 
+    /**
+     * How many tiles to leave blank in the center of the grid
+     * @private
+     */
     private INNER_MOST_BLANKS_TILE_SIZE = 9;
 
     private isoGridHeight: number;
@@ -91,26 +104,22 @@ export class TileScene extends Phaser.Scene {
         this.addGroundTiles();
         this.addObjectTiles();
         this.addPlayer();
-
-        // add particle emitter
-        this.particleEmitterCrops = this.add.particles(0, 0, 'gameAssets', {
-            frame: 'object/cropParticle.png',
-            lifespan: 500,
-            speed: {min: 50, max: 100},
-            scale: {start: 0.1, end: 1},
-            rotate: {start: 0, end: 180},
-            alpha: {start: 1, end: 0},
-            gravityY: 4,
-            emitting: false
-        });
+        this.addParticles();
 
         this.physics.add.overlap(this.logicPlayer, this.collisionGroup, this.handlePlayerCollision, null, this);
     }
 
     private createAnimations() {
         this.anims.create({
-            key: 'move',
-            frames: this.anims.generateFrameNames(TileScene.SPRITE_SHEET_KEY, {start: 1, end: 6, zeroPad: 4, prefix: 'move/move', suffix: '.png'}),
+            key: TileScene.ANIM_KEY_TRACTOR_MOVE_FRONT,
+            frames: this.anims.generateFrameNames(TileScene.SPRITE_SHEET_KEY, {start: 1, end: 6, zeroPad: 4, prefix: TileScene.SPRITE_SHEET_PREFIX_TRACTOR_MOVE_FRONT, suffix: '.png'}),
+            repeat: -1,
+            frameRate: 12
+        })
+
+        this.anims.create({
+            key: TileScene.ANIM_KEY_TRACTOR_MOVE_BACK,
+            frames: this.anims.generateFrameNames(TileScene.SPRITE_SHEET_KEY, {start: 1, end: 6, zeroPad: 4, prefix: TileScene.SPRITE_SHEET_PREFIX_TRACTOR_MOVE_BACK, suffix: '.png'}),
             repeat: -1,
             frameRate: 12
         })
@@ -368,43 +377,62 @@ export class TileScene extends Phaser.Scene {
         this.renderObjectsLayer.add(this.renderPlayer);
     }
 
+    private addParticles() {
+        // add particle emitter
+        this.particleEmitterCrops = this.add.particles(0, 0, 'gameAssets', {
+            frame: 'object/cropParticle.png',
+            lifespan: 500,
+            speed: {min: 50, max: 100},
+            scale: {start: 0.1, end: 1},
+            rotate: {start: 0, end: 180},
+            alpha: {start: 1, end: 0},
+            gravityY: 4,
+            emitting: false
+        });
+    }
+
 
     private updateInput() {
 
         if (this.cursors) {
             this.moveDir.x = 0;
             this.moveDir.y = 0;
+            let inputLocked = false;
 
-            if (this.cursors.up.isDown) {
+            if (this.cursors.up.isDown && !inputLocked) {
                 this.moveDir.y = -1;
                 this.playerFacingDir = -1;
                 this.renderPlayer.scaleX = -1;
 
-                this.renderPlayer.play('move', true);
+                this.renderPlayer.play(TileScene.ANIM_KEY_TRACTOR_MOVE_FRONT, true);
+                inputLocked = true;
             }
 
-            if (this.cursors.down.isDown) {
+            if (this.cursors.down.isDown && !inputLocked) {
                 this.moveDir.y = 1;
                 this.playerFacingDir = -1;
                 this.renderPlayer.scaleX = -1;
 
-                this.renderPlayer.play('move', true);
+                this.renderPlayer.play(TileScene.ANIM_KEY_TRACTOR_MOVE_BACK, true);
+                inputLocked = true;
             }
 
-            if (this.cursors.left.isDown) {
+            if (this.cursors.left.isDown && !inputLocked) {
                 this.moveDir.x = 1;
                 this.playerFacingDir = 1;
                 this.renderPlayer.scaleX = 1;
 
-                this.renderPlayer.play('move', true);
+                this.renderPlayer.play(TileScene.ANIM_KEY_TRACTOR_MOVE_BACK, true);
+                inputLocked = true;
             }
 
-            if (this.cursors.right.isDown) {
+            if (this.cursors.right.isDown && !inputLocked) {
                 this.moveDir.x = -1;
                 this.playerFacingDir = 1;
                 this.renderPlayer.scaleX = 1;
 
-                this.renderPlayer.play('move', true);
+                this.renderPlayer.play(TileScene.ANIM_KEY_TRACTOR_MOVE_FRONT, true);
+                inputLocked = true;
             }
 
             if (this.moveDir.x === 0 && this.moveDir.y === 0) {
@@ -422,6 +450,7 @@ export class TileScene extends Phaser.Scene {
         // this.debugPoints();
         this.depthSortIsometrics();
         this.renderIsometric(delta);
+        this.updateAnimations();
     }
 
     private cartesianToIsometric(cartPt: Point) {
@@ -472,7 +501,9 @@ export class TileScene extends Phaser.Scene {
             isoImage.x = isoPoint.x;
             isoImage.y = isoPoint.y - this.ISO_TILE_HEIGHT * 0.5;
         });
+    }
 
+    private updateAnimations() {
         if (this.moveDir.x === 0 && this.moveDir.y === 0) {
             this.renderPlayer.scaleX = this.playerFacingDir + (0.05 * Math.sin(this.time.now / 1000));
             this.renderPlayer.scaleY = 1 + (0.12 * Math.sin(this.time.now / 1000));
@@ -480,6 +511,5 @@ export class TileScene extends Phaser.Scene {
             this.renderPlayer.scaleX = this.playerFacingDir + (0.05 * Math.sin(this.time.now / 100));
             this.renderPlayer.scaleY = 1 + (0.08 * Math.sin(this.time.now / 100));
         }
-
     }
 }
