@@ -12,7 +12,7 @@ import ParticleEmitter = Phaser.GameObjects.Particles.ParticleEmitter;
 
 export class TileScene extends Phaser.Scene {
 
-    static SPRITE_SHEET_KEY = 'gameAssets';
+    static GAME_ATLAS_KEY = 'gameAssets';
 
     // Sprite-sheet prefixes
     static SPRITE_SHEET_PREFIX_TRACTOR_IDLE_FRONT = 'tractor_idle/idle_front_';
@@ -132,28 +132,28 @@ export class TileScene extends Phaser.Scene {
 
         this.anims.create({
             key: TileScene.ANIM_TRACTOR_KEY_MOVE_FRONT,
-            frames: this.anims.generateFrameNames(TileScene.SPRITE_SHEET_KEY, {start: 1, end: 6, zeroPad: 4, prefix: TileScene.SPRITE_SHEET_PREFIX_TRACTOR_MOVE_FRONT, suffix: '.png'}),
+            frames: this.anims.generateFrameNames(TileScene.GAME_ATLAS_KEY, {start: 1, end: 6, zeroPad: 4, prefix: TileScene.SPRITE_SHEET_PREFIX_TRACTOR_MOVE_FRONT, suffix: '.png'}),
             repeat: -1,
             frameRate: 12
         })
 
         this.anims.create({
             key: TileScene.ANIM_TRACTOR_KEY_MOVE_BACK,
-            frames: this.anims.generateFrameNames(TileScene.SPRITE_SHEET_KEY, {start: 1, end: 6, zeroPad: 4, prefix: TileScene.SPRITE_SHEET_PREFIX_TRACTOR_MOVE_BACK, suffix: '.png'}),
+            frames: this.anims.generateFrameNames(TileScene.GAME_ATLAS_KEY, {start: 1, end: 6, zeroPad: 4, prefix: TileScene.SPRITE_SHEET_PREFIX_TRACTOR_MOVE_BACK, suffix: '.png'}),
             repeat: -1,
             frameRate: 12
         })
 
         this.anims.create({
             key: TileScene.ANIM_TRACTOR_KEY_IDLE_FRONT,
-            frames: this.anims.generateFrameNames(TileScene.SPRITE_SHEET_KEY, {start: 1, end: 1, zeroPad: 4, prefix: TileScene.SPRITE_SHEET_PREFIX_TRACTOR_IDLE_FRONT, suffix: '.png'}),
+            frames: this.anims.generateFrameNames(TileScene.GAME_ATLAS_KEY, {start: 1, end: 1, zeroPad: 4, prefix: TileScene.SPRITE_SHEET_PREFIX_TRACTOR_IDLE_FRONT, suffix: '.png'}),
             repeat: -1,
             frameRate: 12
         })
 
         this.anims.create({
             key: TileScene.ANIM_TRACTOR_KEY_IDLE_BACK,
-            frames: this.anims.generateFrameNames(TileScene.SPRITE_SHEET_KEY, {start: 1, end: 1, zeroPad: 4, prefix: TileScene.SPRITE_SHEET_PREFIX_TRACTOR_IDLE_BACK, suffix: '.png'}),
+            frames: this.anims.generateFrameNames(TileScene.GAME_ATLAS_KEY, {start: 1, end: 1, zeroPad: 4, prefix: TileScene.SPRITE_SHEET_PREFIX_TRACTOR_IDLE_BACK, suffix: '.png'}),
             repeat: -1,
             frameRate: 12
         })
@@ -164,28 +164,28 @@ export class TileScene extends Phaser.Scene {
 
         this.anims.create({
             key: TileScene.ANIM_HARVESTER_KEY_IDLE_FRONT,
-            frames: this.anims.generateFrameNames(TileScene.SPRITE_SHEET_KEY, {start: 1, end: 1, zeroPad: 4, prefix: TileScene.SPRITE_SHEET_PREFIX_HARVESTER_IDLE_FRONT, suffix: '.png'}),
+            frames: this.anims.generateFrameNames(TileScene.GAME_ATLAS_KEY, {start: 1, end: 1, zeroPad: 4, prefix: TileScene.SPRITE_SHEET_PREFIX_HARVESTER_IDLE_FRONT, suffix: '.png'}),
             repeat: -1,
             frameRate: 12
         })
 
         this.anims.create({
             key: TileScene.ANIM_HARVESTER_KEY_MOVE_FRONT,
-            frames: this.anims.generateFrameNames(TileScene.SPRITE_SHEET_KEY, {start: 1, end: 1, zeroPad: 4, prefix: TileScene.SPRITE_SHEET_PREFIX_HARVESTER_MOVE_FRONT, suffix: '.png'}),
+            frames: this.anims.generateFrameNames(TileScene.GAME_ATLAS_KEY, {start: 1, end: 1, zeroPad: 4, prefix: TileScene.SPRITE_SHEET_PREFIX_HARVESTER_MOVE_FRONT, suffix: '.png'}),
             repeat: -1,
             frameRate: 12
         })
 
         this.anims.create({
             key: TileScene.ANIM_HARVESTER_KEY_MOVE_BACK,
-            frames: this.anims.generateFrameNames(TileScene.SPRITE_SHEET_KEY, {start: 1, end: 1, zeroPad: 4, prefix: TileScene.SPRITE_SHEET_PREFIX_HARVESTER_MOVE_BACK, suffix: '.png'}),
+            frames: this.anims.generateFrameNames(TileScene.GAME_ATLAS_KEY, {start: 1, end: 1, zeroPad: 4, prefix: TileScene.SPRITE_SHEET_PREFIX_HARVESTER_MOVE_BACK, suffix: '.png'}),
             repeat: -1,
             frameRate: 12
         })
 
         this.anims.create({
             key: TileScene.ANIM_HARVESTER_KEY_IDLE_BACK,
-            frames: this.anims.generateFrameNames(TileScene.SPRITE_SHEET_KEY, {start: 1, end: 1, zeroPad: 4, prefix: TileScene.SPRITE_SHEET_PREFIX_HARVESTER_IDLE_BACK, suffix: '.png'}),
+            frames: this.anims.generateFrameNames(TileScene.GAME_ATLAS_KEY, {start: 1, end: 1, zeroPad: 4, prefix: TileScene.SPRITE_SHEET_PREFIX_HARVESTER_IDLE_BACK, suffix: '.png'}),
             repeat: -1,
             frameRate: 12
         })
@@ -336,7 +336,7 @@ export class TileScene extends Phaser.Scene {
             const point = this.getCartTilePosition(inPoint);
             const frame = Phaser.Math.RND.pick(['object/ground_2.png', 'object/ground_1.png']);
             const isoPoint = this.cartesianToIsometric(point);
-            this.groundLayer.add(this.make.image({x: (isoPoint.x - this.ISO_TILE_WIDTH * 0.5), y: (isoPoint.y - this.ISO_TILE_HEIGHT * 0.5), key: TileScene.SPRITE_SHEET_KEY, frame: frame}))
+            this.groundLayer.add(this.make.image({x: (isoPoint.x - this.ISO_TILE_WIDTH * 0.5), y: (isoPoint.y - this.ISO_TILE_HEIGHT * 0.5), key: TileScene.GAME_ATLAS_KEY, frame: frame}))
         });
     }
 
@@ -392,7 +392,7 @@ export class TileScene extends Phaser.Scene {
 
             // Create render representation
             const isoPoint = this.cartesianToIsometric(point);
-            const renderObject = new IsoImage({scene: this, x: (isoPoint.x - 32), y: (isoPoint.y - 32), texture: TileScene.SPRITE_SHEET_KEY, frame: 'object/cornfield.png'}, index);
+            const renderObject = new IsoImage({scene: this, x: (isoPoint.x - 32), y: (isoPoint.y - 32), texture: TileScene.GAME_ATLAS_KEY, frame: 'object/cornfield.png'}, index);
             this.renderObjectsLayer.add(renderObject);
         });
 
@@ -437,7 +437,7 @@ export class TileScene extends Phaser.Scene {
         const x = renderPlayerPosition.x;
         const y = renderPlayerPosition.y - this.ISO_TILE_HEIGHT * 0.5;
 
-        this.renderPlayer = new Sprite(this, x, y, TileScene.SPRITE_SHEET_KEY, this.selectedPlayerModel + '_idle/idle_front_0001.png');
+        this.renderPlayer = new Sprite(this, x, y, TileScene.GAME_ATLAS_KEY, this.selectedPlayerModel + '_idle/idle_front_0001.png');
         this.renderPlayer.name = 'player';
 
         // this.renderPlayer = new IsoImage({scene: this, x: (5 * 64) + (renderPlayerPosition.x), y: (renderPlayerPosition.y - 18), texture: 'tractor'}, -1);
