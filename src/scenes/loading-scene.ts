@@ -44,6 +44,6 @@ export class LoadingScene extends Phaser.Scene {
     }
 
     create() {
-        this.scene.start('TileScene');
+        this.scene.start('MenuScene');
     }
 }

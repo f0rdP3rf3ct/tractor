@@ -13,36 +13,36 @@
 	"frame": {"x":446,"y":603,"w":168,"h":24},
 	"rotated": false,
 	"trimmed": true,
-	"spriteSourceSize": {"x":0,"y":4,"w":168,"h":24},
-	"sourceSize": {"w":168,"h":36}
+	"spriteSourceSize": {"x":0,"y":3,"w":168,"h":24},
+	"sourceSize": {"w":168,"h":35}
 },
 {
 	"filename": "loading.png",
-	"frame": {"x":446,"y":629,"w":144,"h":24},
+	"frame": {"x":616,"y":603,"w":144,"h":25},
 	"rotated": false,
 	"trimmed": true,
-	"spriteSourceSize": {"x":0,"y":4,"w":144,"h":24},
+	"spriteSourceSize": {"x":0,"y":3,"w":144,"h":25},
 	"sourceSize": {"w":144,"h":36}
 },
 {
 	"filename": "Logo.png",
-	"frame": {"x":1,"y":603,"w":443,"h":168},
+	"frame": {"x":1,"y":603,"w":443,"h":167},
 	"rotated": false,
 	"trimmed": false,
-	"spriteSourceSize": {"x":0,"y":0,"w":443,"h":168},
-	"sourceSize": {"w":443,"h":168}
+	"spriteSourceSize": {"x":0,"y":0,"w":443,"h":167},
+	"sourceSize": {"w":443,"h":167}
 },
 {
 	"filename": "new_game.png",
-	"frame": {"x":616,"y":603,"w":167,"h":24},
+	"frame": {"x":446,"y":629,"w":167,"h":24},
 	"rotated": false,
 	"trimmed": true,
-	"spriteSourceSize": {"x":0,"y":4,"w":167,"h":24},
-	"sourceSize": {"w":167,"h":36}
+	"spriteSourceSize": {"x":0,"y":3,"w":167,"h":24},
+	"sourceSize": {"w":167,"h":35}
 },
 {
 	"filename": "selection_arrow.png",
-	"frame": {"x":785,"y":603,"w":11,"h":13},
+	"frame": {"x":615,"y":630,"w":11,"h":13},
 	"rotated": false,
 	"trimmed": false,
 	"spriteSourceSize": {"x":0,"y":0,"w":11,"h":13},
@@ -53,8 +53,8 @@
 	"version": "1.0",
 	"image": "uiAssets.png",
 	"format": "RGBA8888",
-	"size": {"w":802,"h":772},
-	"scale": "1",
-	"smartupdate": "$TexturePacker:SmartUpdate:1cd8e2396b85422877e8cb56bf70f73c:5262a6e76106933120097eb220f69efd:727d0100c7c859844df42fb524152aaf$"
+	"size": {"w":802,"h":771},
+	"scale": "0.5",
+	"smartupdate": "$TexturePacker:SmartUpdate:04de946757435b4f7f46706c9f84f241:35d39e890b7bb4cc86ae7e455f54ed80:727d0100c7c859844df42fb524152aaf$"
 }
 }
