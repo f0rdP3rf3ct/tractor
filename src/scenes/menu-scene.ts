@@ -1,4 +1,5 @@
 import {LoadingScene} from "./loading-scene";
+import Point = Phaser.Geom.Point;
 
 export class MenuScene extends Phaser.Scene {
 
@@ -8,11 +9,15 @@ export class MenuScene extends Phaser.Scene {
 
     private buttonControls: Phaser.GameObjects.Image;
 
+    private selectionArrow: Phaser.GameObjects.Image;
+
+    private selections = [
+        {key: 'newGame', coord: new Point(292, 346), selected: true},
+        {key: 'controls', coord: new Point(292, 352), selected: false}
+    ];
+
     constructor() {
         super({key: 'MenuScene'});
-    }
-
-    preload() {
     }
 
     create() {
@@ -24,6 +29,8 @@ export class MenuScene extends Phaser.Scene {
         this.buttonNewGame = this.add.image(width * 0.5, 302, LoadingScene.UI_ATLAS_KEY, 'new_game.png');
         this.buttonControls = this.add.image(width * 0.5, 350, LoadingScene.UI_ATLAS_KEY, 'controls.png');
 
+        this.selectionArrow = this.add.image(292, 346, LoadingScene.UI_ATLAS_KEY, 'selection_arrow.png');
+
         this.tweens.add({
             targets: this.logo,
             y: '+=20',
@@ -32,10 +39,7 @@ export class MenuScene extends Phaser.Scene {
             repeat: -1,
             ease: 'Sine.easeInOut'
         });
-
     }
 
-    update(time: number, delta: number) {
-
-    }
+    update(time: number, delta: number) {}
 }
