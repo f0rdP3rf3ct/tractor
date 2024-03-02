@@ -10,6 +10,9 @@ export const GameConfig: Phaser.Types.Core.GameConfig = {
   backgroundColor: '#fbff66',
   parent: 'game',
   scene: [BootScene, MenuScene, LoadingScene, TileScene],
+  input: {
+    gamepad: true
+  },
   physics: {
     default: 'arcade',
     arcade: {

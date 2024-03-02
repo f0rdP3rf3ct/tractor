@@ -1,5 +1,6 @@
 import {LoadingScene} from "./loading-scene";
 import Point = Phaser.Geom.Point;
+import {Controls} from "../misc/Controls";
 
 export class MenuScene extends Phaser.Scene {
 
@@ -11,8 +12,18 @@ export class MenuScene extends Phaser.Scene {
 
     private selectionArrow: Phaser.GameObjects.Image;
 
+    private controls: Controls;
+
+    private buttonIsDown: boolean = false;
+
+    private currentSelectionIndex = 0;
+
+    private nextDelayStep: number = 0;
+
+    private INPUT_AXIS_DELAY: number = 200;
+
     private selections = [
-        {key: 'newGame', coord: new Point(292, 346), selected: true},
+        {key: 'newGame', coord: new Point(292, 200), selected: true},
         {key: 'controls', coord: new Point(292, 352), selected: false}
     ];
 
@@ -21,6 +32,8 @@ export class MenuScene extends Phaser.Scene {
     }
 
     create() {
+        this.controls = new Controls(this);
+
         const width = this.cameras.main.width;
         const height = this.cameras.main.height;
 
@@ -41,5 +54,46 @@ export class MenuScene extends Phaser.Scene {
         });
     }
 
-    update(time: number, delta: number) {}
+    update(time: number, delta: number) {
+        this.updateControls(time)
+    }
+
+    private updateAxisSelection(dir: number, time: number) {
+
+        this.currentSelectionIndex += dir;
+
+        if (this.currentSelectionIndex < 0 || this.currentSelectionIndex > this.selections.length - 1) {
+            this.currentSelectionIndex = 0;
+        }
+
+        this.selections.forEach((selection, index) => {
+            selection.selected = false;
+            if (index === this.currentSelectionIndex) {
+                selection.selected = true;
+                this.selectionArrow.y = selection.coord.y;
+            }
+        })
+    }
+
+    updateControls(time: number) {
+        this.controls.update();
+
+        if (this.controls.noAxisIsPressed()) {
+            this.buttonIsDown = false;
+        }
+
+        if (this.controls.up()) {
+            if (!this.buttonIsDown) {
+                this.updateAxisSelection(-1, time)
+                this.buttonIsDown = true;
+            }
+        }
+
+        if (this.controls.down()) {
+            if (!this.buttonIsDown) {
+                this.updateAxisSelection(1, time)
+                this.buttonIsDown = true;
+            }
+        }
+    }
 }

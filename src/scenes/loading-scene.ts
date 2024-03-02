@@ -1,4 +1,6 @@
 import {TileScene} from "./tile-scene";
+import {Controls} from "../misc/Controls";
+import GamepadPlugin = Phaser.Input.Gamepad.GamepadPlugin;
 
 export class LoadingScene extends Phaser.Scene {
 
