@@ -9,6 +9,7 @@ import HTML5AudioSound = Phaser.Sound.HTML5AudioSound;
 import NoAudioSound = Phaser.Sound.NoAudioSound;
 import WebAudioSound = Phaser.Sound.WebAudioSound;
 import ParticleEmitter = Phaser.GameObjects.Particles.ParticleEmitter;
+import {Controls} from "../misc/Controls";
 
 export class TileScene extends Phaser.Scene {
 
@@ -65,8 +66,6 @@ export class TileScene extends Phaser.Scene {
     // px / ms
     private MOVE_SPEED = 0.1;
 
-    private cursors: CursorKeys;
-
     private moveDir = {x: 0, y: 0};
 
     private cartesianPoints: Point[] = [];
@@ -90,6 +89,8 @@ export class TileScene extends Phaser.Scene {
     // Particles
     private particleEmitterCrops: ParticleEmitter;
 
+    private controls: Controls;
+
     constructor() {
         super({key: 'TileScene'});
     }
@@ -101,7 +102,7 @@ export class TileScene extends Phaser.Scene {
     }
 
     create(): void {
-        this.cursors = this.input.keyboard.createCursorKeys();
+        this.controls = new Controls(this);
         this.collisionGroup = this.physics.add.group();
 
         this.isoGridWidth = this.TILEMAP_SIZE * this.ISO_TILE_WIDTH;
@@ -461,106 +462,108 @@ export class TileScene extends Phaser.Scene {
 
     private updateInput() {
 
-        if (this.cursors) {
-            this.moveDir.x = 0;
-            this.moveDir.y = 0;
-            let inputLocked = false;
+        this.moveDir.x = 0;
+        this.moveDir.y = 0;
+        let inputLocked = false;
 
-            if (this.cursors.up.isDown && !inputLocked) {
-                this.moveDir.y = -1;
-                this.playerFacingDir = -1;
-                this.renderPlayer.scaleX = -1;
+        if (this.controls.up() && !inputLocked) {
+            this.moveDir.y = -1;
+            this.playerFacingDir = -1;
+            this.renderPlayer.scaleX = -1;
 
-                switch (this.selectedPlayerModel) {
-                    case 'tractor':
-                        this.renderPlayer.play(TileScene.ANIM_TRACTOR_KEY_MOVE_FRONT, true);
-                        break;
-                    case 'harvester':
-                        this.renderPlayer.play(TileScene.ANIM_HARVESTER_KEY_MOVE_FRONT, true);
-                        break;
-                }
-
-                inputLocked = true;
+            switch (this.selectedPlayerModel) {
+                case 'tractor':
+                    this.renderPlayer.play(TileScene.ANIM_TRACTOR_KEY_MOVE_FRONT, true);
+                    break;
+                case 'harvester':
+                    this.renderPlayer.play(TileScene.ANIM_HARVESTER_KEY_MOVE_FRONT, true);
+                    break;
             }
 
-            if (this.cursors.down.isDown && !inputLocked) {
-                this.moveDir.y = 1;
-                this.playerFacingDir = -1;
-                this.renderPlayer.scaleX = -1;
+            inputLocked = true;
+        }
 
-                switch (this.selectedPlayerModel) {
-                    case 'tractor':
-                        this.renderPlayer.play(TileScene.ANIM_TRACTOR_KEY_MOVE_BACK, true);
-                        break;
-                    case 'harvester':
-                        this.renderPlayer.play(TileScene.ANIM_HARVESTER_KEY_MOVE_BACK, true);
-                        break;
-                }
+        if (this.controls.down() && !inputLocked) {
+            this.moveDir.y = 1;
+            this.playerFacingDir = -1;
+            this.renderPlayer.scaleX = -1;
 
-                inputLocked = true;
+            switch (this.selectedPlayerModel) {
+                case 'tractor':
+                    this.renderPlayer.play(TileScene.ANIM_TRACTOR_KEY_MOVE_BACK, true);
+                    break;
+                case 'harvester':
+                    this.renderPlayer.play(TileScene.ANIM_HARVESTER_KEY_MOVE_BACK, true);
+                    break;
             }
 
-            if (this.cursors.left.isDown && !inputLocked) {
-                this.moveDir.x = 1;
-                this.playerFacingDir = 1;
-                this.renderPlayer.scaleX = 1;
+            inputLocked = true;
+        }
 
-                switch (this.selectedPlayerModel) {
-                    case 'tractor':
-                        this.renderPlayer.play(TileScene.ANIM_TRACTOR_KEY_MOVE_BACK, true);
-                        break;
-                    case 'harvester':
-                        this.renderPlayer.play(TileScene.ANIM_HARVESTER_KEY_MOVE_BACK, true);
-                        break;
-                }
+        if (this.controls.left() && !inputLocked) {
+            this.moveDir.x = 1;
+            this.playerFacingDir = 1;
+            this.renderPlayer.scaleX = 1;
 
-                inputLocked = true;
+            switch (this.selectedPlayerModel) {
+                case 'tractor':
+                    this.renderPlayer.play(TileScene.ANIM_TRACTOR_KEY_MOVE_BACK, true);
+                    break;
+                case 'harvester':
+                    this.renderPlayer.play(TileScene.ANIM_HARVESTER_KEY_MOVE_BACK, true);
+                    break;
             }
 
-            if (this.cursors.right.isDown && !inputLocked) {
-                this.moveDir.x = -1;
-                this.playerFacingDir = 1;
-                this.renderPlayer.scaleX = 1;
+            inputLocked = true;
+        }
 
-                switch (this.selectedPlayerModel) {
-                    case 'tractor':
-                        this.renderPlayer.play(TileScene.ANIM_TRACTOR_KEY_MOVE_FRONT, true);
-                        break;
-                    case 'harvester':
-                        this.renderPlayer.play(TileScene.ANIM_HARVESTER_KEY_MOVE_FRONT, true);
-                        break;
-                }
+        if (this.controls.right() && !inputLocked) {
+            this.moveDir.x = -1;
+            this.playerFacingDir = 1;
+            this.renderPlayer.scaleX = 1;
 
-                inputLocked = true;
+            switch (this.selectedPlayerModel) {
+                case 'tractor':
+                    this.renderPlayer.play(TileScene.ANIM_TRACTOR_KEY_MOVE_FRONT, true);
+                    break;
+                case 'harvester':
+                    this.renderPlayer.play(TileScene.ANIM_HARVESTER_KEY_MOVE_FRONT, true);
+                    break;
             }
 
-            if (this.moveDir.x === 0 && this.moveDir.y === 0) {
-                if (this.playerFacingDir === 1) {
-                    switch (this.selectedPlayerModel) {
-                        case 'tractor':
-                            this.renderPlayer.play(TileScene.ANIM_TRACTOR_KEY_IDLE_FRONT, true);
-                            break;
-                        case 'harvester':
-                            this.renderPlayer.play(TileScene.ANIM_HARVESTER_KEY_IDLE_FRONT, true);
-                            break;
-                    }
-                }
+            inputLocked = true;
+        }
 
-                if (this.playerFacingDir === -1) {
-                    switch (this.selectedPlayerModel) {
-                        case 'tractor':
-                            this.renderPlayer.play(TileScene.ANIM_TRACTOR_KEY_IDLE_BACK, true);
-                            break;
-                        case 'harvester':
-                            this.renderPlayer.play(TileScene.ANIM_HARVESTER_KEY_IDLE_BACK, true);
-                            break;
-                    }
+        if (this.moveDir.x === 0 && this.moveDir.y === 0) {
+            if (this.playerFacingDir === 1) {
+                switch (this.selectedPlayerModel) {
+                    case 'tractor':
+                        this.renderPlayer.play(TileScene.ANIM_TRACTOR_KEY_IDLE_FRONT, true);
+                        break;
+                    case 'harvester':
+                        this.renderPlayer.play(TileScene.ANIM_HARVESTER_KEY_IDLE_FRONT, true);
+                        break;
+                }
+            }
+
+            if (this.playerFacingDir === -1) {
+                switch (this.selectedPlayerModel) {
+                    case 'tractor':
+                        this.renderPlayer.play(TileScene.ANIM_TRACTOR_KEY_IDLE_BACK, true);
+                        break;
+                    case 'harvester':
+                        this.renderPlayer.play(TileScene.ANIM_HARVESTER_KEY_IDLE_BACK, true);
+                        break;
                 }
             }
         }
     }
 
     update(time: number, delta: number) {
+        if (this.controls) {
+            this.controls.update();
+        }
+
         this.updateInput();
         this.updateCartesianTilePoints();
         this.updateLogic();

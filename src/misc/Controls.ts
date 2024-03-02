@@ -55,6 +55,7 @@ export class Controls {
     }
 
     private setupGamePadControls() {
+        debugger;
         /* connect gamepad if "connect" event is not fired */
         if (this.scene.input.gamepad.total) {
             this.pad = this.scene.input.gamepad.pad1;
