@@ -10,16 +10,11 @@ import NoAudioSound = Phaser.Sound.NoAudioSound;
 import WebAudioSound = Phaser.Sound.WebAudioSound;
 import ParticleEmitter = Phaser.GameObjects.Particles.ParticleEmitter;
 import {Controls} from "../misc/Controls";
+import {Tractor} from "../objects/Tractor";
 
 export class TileScene extends Phaser.Scene {
 
     static GAME_ATLAS_KEY = 'gameAssets';
-
-    // Sprite-sheet prefixes
-    static SPRITE_SHEET_PREFIX_TRACTOR_IDLE_FRONT = 'tractor_idle/idle_front_';
-    static SPRITE_SHEET_PREFIX_TRACTOR_IDLE_BACK = 'tractor_idle/idle_back_';
-    static SPRITE_SHEET_PREFIX_TRACTOR_MOVE_FRONT = 'tractor_move/move_front_';
-    static SPRITE_SHEET_PREFIX_TRACTOR_MOVE_BACK = 'tractor_move/move_back_';
 
     static SPRITE_SHEET_PREFIX_HARVESTER_IDLE_FRONT = 'harvester_idle/idle_front_';
     static SPRITE_SHEET_PREFIX_HARVESTER_IDLE_BACK = 'harvester_idle/idle_back_';
@@ -37,7 +32,8 @@ export class TileScene extends Phaser.Scene {
     static ANIM_HARVESTER_KEY_IDLE_FRONT = 'harvester_idle_front';
     static ANIM_HARVESTER_KEY_IDLE_BACK = 'harvester_idle_back';
 
-    private selectedPlayerModel = 'harvester';
+    private availableVehicles = ['harvester', 'tractor'];
+    private selectedPlayerModelIndex = 0;
 
     private TILEMAP_SIZE = 40;
 
@@ -72,7 +68,7 @@ export class TileScene extends Phaser.Scene {
 
     private logicPlayer: Image;
 
-    private renderPlayer: Sprite;
+    private renderPlayerVehicle: Sprite;
 
     private groundLayer: Layer;
 
@@ -121,6 +117,7 @@ export class TileScene extends Phaser.Scene {
         this.addObjectTiles();
         this.addPlayer();
         this.addParticles();
+        this.addEventListeners();
 
         this.physics.add.overlap(this.logicPlayer, this.collisionGroup, this.handlePlayerCollision, null, this);
     }
@@ -130,20 +127,22 @@ export class TileScene extends Phaser.Scene {
         /**
          * TRACTOR
          */
-
+        /*
         this.anims.create({
             key: TileScene.ANIM_TRACTOR_KEY_MOVE_FRONT,
             frames: this.anims.generateFrameNames(TileScene.GAME_ATLAS_KEY, {start: 1, end: 6, zeroPad: 4, prefix: TileScene.SPRITE_SHEET_PREFIX_TRACTOR_MOVE_FRONT, suffix: '.png'}),
             repeat: -1,
             frameRate: 12
         })
-
+         */
+        /*
         this.anims.create({
             key: TileScene.ANIM_TRACTOR_KEY_MOVE_BACK,
             frames: this.anims.generateFrameNames(TileScene.GAME_ATLAS_KEY, {start: 1, end: 6, zeroPad: 4, prefix: TileScene.SPRITE_SHEET_PREFIX_TRACTOR_MOVE_BACK, suffix: '.png'}),
             repeat: -1,
             frameRate: 12
         })
+
 
         this.anims.create({
             key: TileScene.ANIM_TRACTOR_KEY_IDLE_FRONT,
@@ -158,6 +157,7 @@ export class TileScene extends Phaser.Scene {
             repeat: -1,
             frameRate: 12
         })
+         */
 
         /**
          * HARVESTER
@@ -420,16 +420,7 @@ export class TileScene extends Phaser.Scene {
         this.logicPlayer = this.physics.add.image(cartPlayerPosition.x, cartPlayerPosition.y, 'cartDebugPlayer');
         this.logicPlayer.alpha = 0.2;
 
-        const body = this.logicPlayer.body as Phaser.Physics.Arcade.Body;
-
-        switch (this.selectedPlayerModel) {
-            case 'tractor':
-                body.setSize(64, 64);
-                break;
-            case 'harvester':
-                body.setSize(128, 128);
-                break;
-        }
+        this.selectVehicle(0);
 
         this.physics.add.existing(this.logicPlayer);
 
@@ -438,11 +429,8 @@ export class TileScene extends Phaser.Scene {
         const x = renderPlayerPosition.x;
         const y = renderPlayerPosition.y - this.ISO_TILE_HEIGHT * 0.5;
 
-        this.renderPlayer = new Sprite(this, x, y, TileScene.GAME_ATLAS_KEY, this.selectedPlayerModel + '_idle/idle_front_0001.png');
-        this.renderPlayer.name = 'player';
-
-        // this.renderPlayer = new IsoImage({scene: this, x: (5 * 64) + (renderPlayerPosition.x), y: (renderPlayerPosition.y - 18), texture: 'tractor'}, -1);
-        this.renderObjectsLayer.add(this.renderPlayer);
+        this.renderPlayerVehicle = new Tractor(this, x, y);
+        this.renderObjectsLayer.add(this.renderPlayerVehicle);
     }
 
     private addParticles() {
@@ -459,6 +447,46 @@ export class TileScene extends Phaser.Scene {
         });
     }
 
+    private addEventListeners() {
+        this.controls.inputActionEvent.addListener(Controls.INPUT_ACTION_EVENT_KEY, (key: string) => {
+            switch (key) {
+                case Controls.INPUT_ACTION_EVENT_KEY_BUTTON_L:
+                    this.selectVehicle(0);
+                    break;
+                case Controls.INPUT_ACTION_EVENT_KEY_BUTTON_R:
+                    this.selectVehicle(1);
+                    break;
+            }
+        })
+    }
+
+    /**
+     * @param index
+     * @private
+     */
+    private selectVehicle(index: number) {
+        const body = this.logicPlayer.body as Phaser.Physics.Arcade.Body;
+        switch (this.availableVehicles[index]) {
+            case 'tractor':
+                body.setSize(64, 64);
+                break;
+            case 'harvester':
+                body.setSize(128, 128);
+                break;
+        }
+    }
+
+    /**
+     * @param dir
+     * @private
+     */
+
+    /*
+    private cycleVehicle(dir: number) {
+        if ()
+    }
+     */
+
 
     private updateInput() {
 
@@ -469,14 +497,14 @@ export class TileScene extends Phaser.Scene {
         if (this.controls.up() && !inputLocked) {
             this.moveDir.y = -1;
             this.playerFacingDir = -1;
-            this.renderPlayer.scaleX = -1;
+            this.renderPlayerVehicle.scaleX = -1;
 
-            switch (this.selectedPlayerModel) {
+            switch (this.selectedPlayerModelIndex) {
                 case 'tractor':
-                    this.renderPlayer.play(TileScene.ANIM_TRACTOR_KEY_MOVE_FRONT, true);
+                    this.renderPlayerVehicle.play(TileScene.ANIM_TRACTOR_KEY_MOVE_FRONT, true);
                     break;
                 case 'harvester':
-                    this.renderPlayer.play(TileScene.ANIM_HARVESTER_KEY_MOVE_FRONT, true);
+                    this.renderPlayerVehicle.play(TileScene.ANIM_HARVESTER_KEY_MOVE_FRONT, true);
                     break;
             }
 
@@ -486,14 +514,14 @@ export class TileScene extends Phaser.Scene {
         if (this.controls.down() && !inputLocked) {
             this.moveDir.y = 1;
             this.playerFacingDir = -1;
-            this.renderPlayer.scaleX = -1;
+            this.renderPlayerVehicle.scaleX = -1;
 
-            switch (this.selectedPlayerModel) {
+            switch (this.selectedPlayerModelIndex) {
                 case 'tractor':
-                    this.renderPlayer.play(TileScene.ANIM_TRACTOR_KEY_MOVE_BACK, true);
+                    this.renderPlayerVehicle.play(TileScene.ANIM_TRACTOR_KEY_MOVE_BACK, true);
                     break;
                 case 'harvester':
-                    this.renderPlayer.play(TileScene.ANIM_HARVESTER_KEY_MOVE_BACK, true);
+                    this.renderPlayerVehicle.play(TileScene.ANIM_HARVESTER_KEY_MOVE_BACK, true);
                     break;
             }
 
@@ -503,14 +531,14 @@ export class TileScene extends Phaser.Scene {
         if (this.controls.left() && !inputLocked) {
             this.moveDir.x = 1;
             this.playerFacingDir = 1;
-            this.renderPlayer.scaleX = 1;
+            this.renderPlayerVehicle.scaleX = 1;
 
-            switch (this.selectedPlayerModel) {
+            switch (this.selectedPlayerModelIndex) {
                 case 'tractor':
-                    this.renderPlayer.play(TileScene.ANIM_TRACTOR_KEY_MOVE_BACK, true);
+                    this.renderPlayerVehicle.play(TileScene.ANIM_TRACTOR_KEY_MOVE_BACK, true);
                     break;
                 case 'harvester':
-                    this.renderPlayer.play(TileScene.ANIM_HARVESTER_KEY_MOVE_BACK, true);
+                    this.renderPlayerVehicle.play(TileScene.ANIM_HARVESTER_KEY_MOVE_BACK, true);
                     break;
             }
 
@@ -520,14 +548,14 @@ export class TileScene extends Phaser.Scene {
         if (this.controls.right() && !inputLocked) {
             this.moveDir.x = -1;
             this.playerFacingDir = 1;
-            this.renderPlayer.scaleX = 1;
+            this.renderPlayerVehicle.scaleX = 1;
 
-            switch (this.selectedPlayerModel) {
+            switch (this.selectedPlayerModelIndex) {
                 case 'tractor':
-                    this.renderPlayer.play(TileScene.ANIM_TRACTOR_KEY_MOVE_FRONT, true);
+                    this.renderPlayerVehicle.play(TileScene.ANIM_TRACTOR_KEY_MOVE_FRONT, true);
                     break;
                 case 'harvester':
-                    this.renderPlayer.play(TileScene.ANIM_HARVESTER_KEY_MOVE_FRONT, true);
+                    this.renderPlayerVehicle.play(TileScene.ANIM_HARVESTER_KEY_MOVE_FRONT, true);
                     break;
             }
 
@@ -536,23 +564,23 @@ export class TileScene extends Phaser.Scene {
 
         if (this.moveDir.x === 0 && this.moveDir.y === 0) {
             if (this.playerFacingDir === 1) {
-                switch (this.selectedPlayerModel) {
+                switch (this.selectedPlayerModelIndex) {
                     case 'tractor':
-                        this.renderPlayer.play(TileScene.ANIM_TRACTOR_KEY_IDLE_FRONT, true);
+                        this.renderPlayerVehicle.play(TileScene.ANIM_TRACTOR_KEY_IDLE_FRONT, true);
                         break;
                     case 'harvester':
-                        this.renderPlayer.play(TileScene.ANIM_HARVESTER_KEY_IDLE_FRONT, true);
+                        this.renderPlayerVehicle.play(TileScene.ANIM_HARVESTER_KEY_IDLE_FRONT, true);
                         break;
                 }
             }
 
             if (this.playerFacingDir === -1) {
-                switch (this.selectedPlayerModel) {
+                switch (this.selectedPlayerModelIndex) {
                     case 'tractor':
-                        this.renderPlayer.play(TileScene.ANIM_TRACTOR_KEY_IDLE_BACK, true);
+                        this.renderPlayerVehicle.play(TileScene.ANIM_TRACTOR_KEY_IDLE_BACK, true);
                         break;
                     case 'harvester':
-                        this.renderPlayer.play(TileScene.ANIM_HARVESTER_KEY_IDLE_BACK, true);
+                        this.renderPlayerVehicle.play(TileScene.ANIM_HARVESTER_KEY_IDLE_BACK, true);
                         break;
                 }
             }
@@ -560,6 +588,7 @@ export class TileScene extends Phaser.Scene {
     }
 
     update(time: number, delta: number) {
+
         if (this.controls) {
             this.controls.update();
         }
@@ -627,11 +656,11 @@ export class TileScene extends Phaser.Scene {
 
     private updateAnimations() {
         if (this.moveDir.x === 0 && this.moveDir.y === 0) {
-            this.renderPlayer.scaleX = this.playerFacingDir + (0.05 * Math.sin(this.time.now / 1000));
-            this.renderPlayer.scaleY = 1 + (0.12 * Math.sin(this.time.now / 1000));
+            this.renderPlayerVehicle.scaleX = this.playerFacingDir + (0.05 * Math.sin(this.time.now / 1000));
+            this.renderPlayerVehicle.scaleY = 1 + (0.12 * Math.sin(this.time.now / 1000));
         } else {
-            this.renderPlayer.scaleX = this.playerFacingDir + (0.05 * Math.sin(this.time.now / 100));
-            this.renderPlayer.scaleY = 1 + (0.08 * Math.sin(this.time.now / 100));
+            this.renderPlayerVehicle.scaleX = this.playerFacingDir + (0.05 * Math.sin(this.time.now / 100));
+            this.renderPlayerVehicle.scaleY = 1 + (0.08 * Math.sin(this.time.now / 100));
         }
     }
 }
