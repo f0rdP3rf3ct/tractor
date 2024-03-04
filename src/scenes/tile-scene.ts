@@ -11,6 +11,7 @@ import WebAudioSound = Phaser.Sound.WebAudioSound;
 import ParticleEmitter = Phaser.GameObjects.Particles.ParticleEmitter;
 import {Controls} from "../misc/Controls";
 import {Tractor} from "../objects/Tractor";
+import {Vehicle} from "../objects/base/Vehicle";
 
 export class TileScene extends Phaser.Scene {
 
@@ -68,7 +69,7 @@ export class TileScene extends Phaser.Scene {
 
     private logicPlayer: Image;
 
-    private renderPlayerVehicle: Sprite;
+    private renderPlayerVehicle: Vehicle;
 
     private groundLayer: Layer;
 
@@ -497,16 +498,9 @@ export class TileScene extends Phaser.Scene {
         if (this.controls.up() && !inputLocked) {
             this.moveDir.y = -1;
             this.playerFacingDir = -1;
-            this.renderPlayerVehicle.scaleX = -1;
 
-            switch (this.selectedPlayerModelIndex) {
-                case 'tractor':
-                    this.renderPlayerVehicle.play(TileScene.ANIM_TRACTOR_KEY_MOVE_FRONT, true);
-                    break;
-                case 'harvester':
-                    this.renderPlayerVehicle.play(TileScene.ANIM_HARVESTER_KEY_MOVE_FRONT, true);
-                    break;
-            }
+            this.renderPlayerVehicle.scaleX = -1;
+            this.renderPlayerVehicle.play(this.renderPlayerVehicle.ANIM_KEY_MOVE_FRONT, true);
 
             inputLocked = true;
         }
@@ -514,16 +508,9 @@ export class TileScene extends Phaser.Scene {
         if (this.controls.down() && !inputLocked) {
             this.moveDir.y = 1;
             this.playerFacingDir = -1;
-            this.renderPlayerVehicle.scaleX = -1;
 
-            switch (this.selectedPlayerModelIndex) {
-                case 'tractor':
-                    this.renderPlayerVehicle.play(TileScene.ANIM_TRACTOR_KEY_MOVE_BACK, true);
-                    break;
-                case 'harvester':
-                    this.renderPlayerVehicle.play(TileScene.ANIM_HARVESTER_KEY_MOVE_BACK, true);
-                    break;
-            }
+            this.renderPlayerVehicle.scaleX = -1;
+            this.renderPlayerVehicle.play(this.renderPlayerVehicle.ANIM_KEY_MOVE_BACK, true);
 
             inputLocked = true;
         }
@@ -531,16 +518,9 @@ export class TileScene extends Phaser.Scene {
         if (this.controls.left() && !inputLocked) {
             this.moveDir.x = 1;
             this.playerFacingDir = 1;
-            this.renderPlayerVehicle.scaleX = 1;
 
-            switch (this.selectedPlayerModelIndex) {
-                case 'tractor':
-                    this.renderPlayerVehicle.play(TileScene.ANIM_TRACTOR_KEY_MOVE_BACK, true);
-                    break;
-                case 'harvester':
-                    this.renderPlayerVehicle.play(TileScene.ANIM_HARVESTER_KEY_MOVE_BACK, true);
-                    break;
-            }
+            this.renderPlayerVehicle.scaleX = 1;
+            this.renderPlayerVehicle.play(this.renderPlayerVehicle.ANIM_KEY_MOVE_BACK, true);
 
             inputLocked = true;
         }
@@ -548,41 +528,20 @@ export class TileScene extends Phaser.Scene {
         if (this.controls.right() && !inputLocked) {
             this.moveDir.x = -1;
             this.playerFacingDir = 1;
-            this.renderPlayerVehicle.scaleX = 1;
 
-            switch (this.selectedPlayerModelIndex) {
-                case 'tractor':
-                    this.renderPlayerVehicle.play(TileScene.ANIM_TRACTOR_KEY_MOVE_FRONT, true);
-                    break;
-                case 'harvester':
-                    this.renderPlayerVehicle.play(TileScene.ANIM_HARVESTER_KEY_MOVE_FRONT, true);
-                    break;
-            }
+            this.renderPlayerVehicle.scaleX = 1;
+            this.renderPlayerVehicle.play(this.renderPlayerVehicle.ANIM_KEY_MOVE_FRONT, true);
 
             inputLocked = true;
         }
 
         if (this.moveDir.x === 0 && this.moveDir.y === 0) {
             if (this.playerFacingDir === 1) {
-                switch (this.selectedPlayerModelIndex) {
-                    case 'tractor':
-                        this.renderPlayerVehicle.play(TileScene.ANIM_TRACTOR_KEY_IDLE_FRONT, true);
-                        break;
-                    case 'harvester':
-                        this.renderPlayerVehicle.play(TileScene.ANIM_HARVESTER_KEY_IDLE_FRONT, true);
-                        break;
-                }
+                this.renderPlayerVehicle.play(this.renderPlayerVehicle.ANIM_KEY_IDLE_FRONT, true);
             }
 
             if (this.playerFacingDir === -1) {
-                switch (this.selectedPlayerModelIndex) {
-                    case 'tractor':
-                        this.renderPlayerVehicle.play(TileScene.ANIM_TRACTOR_KEY_IDLE_BACK, true);
-                        break;
-                    case 'harvester':
-                        this.renderPlayerVehicle.play(TileScene.ANIM_HARVESTER_KEY_IDLE_BACK, true);
-                        break;
-                }
+                this.renderPlayerVehicle.play(this.renderPlayerVehicle.ANIM_KEY_IDLE_BACK, true);
             }
         }
     }

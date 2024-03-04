@@ -4,10 +4,10 @@ export class Tractor extends Vehicle {
 
     static IDLE_FRAME = 'tractor_idle/idle_front_0001.png';
 
-    static ANIM_KEY_MOVE_FRONT = 'tractor_move_front';
-    static ANIM_KEY_MOVE_BACK = 'tractor_move_back';
-    static ANIM_KEY_IDLE_FRONT = 'tractor_idle_front';
-    static ANIM_KEY_IDLE_BACK = 'tractor_idle_back';
+    public ANIM_KEY_MOVE_FRONT = 'tractor_move_front';
+    public ANIM_KEY_MOVE_BACK = 'tractor_move_back';
+    public ANIM_KEY_IDLE_FRONT = 'tractor_idle_front';
+    public ANIM_KEY_IDLE_BACK = 'tractor_idle_back';
 
     static SPRITE_SHEET_PREFIX_TRACTOR_MOVE_FRONT = 'tractor_move/move_front_';
     static SPRITE_SHEET_PREFIX_TRACTOR_MOVE_BACK = 'tractor_move/move_back_';
@@ -22,28 +22,28 @@ export class Tractor extends Vehicle {
 
     protected createAnimations() {
         this.anims.create({
-            key: Tractor.ANIM_KEY_MOVE_FRONT,
+            key: this.ANIM_KEY_MOVE_FRONT,
             frames: this.anims.generateFrameNames(Vehicle.ATLAS_KEY, {start: 1, end: 6, zeroPad: 4, prefix: Tractor.SPRITE_SHEET_PREFIX_TRACTOR_MOVE_FRONT, suffix: '.png'}),
             repeat: -1,
             frameRate: 12
         })
 
         this.anims.create({
-            key: Tractor.ANIM_KEY_MOVE_BACK,
+            key: this.ANIM_KEY_MOVE_BACK,
             frames: this.anims.generateFrameNames(Vehicle.ATLAS_KEY, {start: 1, end: 6, zeroPad: 4, prefix: Tractor.SPRITE_SHEET_PREFIX_TRACTOR_MOVE_BACK, suffix: '.png'}),
             repeat: -1,
             frameRate: 12
         })
 
         this.anims.create({
-            key: Tractor.ANIM_KEY_IDLE_FRONT,
+            key: this.ANIM_KEY_IDLE_FRONT,
             frames: this.anims.generateFrameNames(Vehicle.ATLAS_KEY, {start: 1, end: 1, zeroPad: 4, prefix: Tractor.SPRITE_SHEET_PREFIX_TRACTOR_IDLE_FRONT, suffix: '.png'}),
             repeat: -1,
             frameRate: 12
         })
 
         this.anims.create({
-            key: Tractor.ANIM_KEY_IDLE_BACK,
+            key: this.ANIM_KEY_IDLE_BACK,
             frames: this.anims.generateFrameNames(Vehicle.ATLAS_KEY, {start: 1, end: 1, zeroPad: 4, prefix: Tractor.SPRITE_SHEET_PREFIX_TRACTOR_IDLE_BACK, suffix: '.png'}),
             repeat: -1,
             frameRate: 12
