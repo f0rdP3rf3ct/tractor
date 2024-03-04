@@ -12,28 +12,13 @@ import ParticleEmitter = Phaser.GameObjects.Particles.ParticleEmitter;
 import {Controls} from "../misc/Controls";
 import {Tractor} from "../objects/Tractor";
 import {Vehicle} from "../objects/base/Vehicle";
+import {Harvester} from "../objects/Harvester";
 
 export class TileScene extends Phaser.Scene {
 
     static GAME_ATLAS_KEY = 'gameAssets';
 
-    static SPRITE_SHEET_PREFIX_HARVESTER_IDLE_FRONT = 'harvester_idle/idle_front_';
-    static SPRITE_SHEET_PREFIX_HARVESTER_IDLE_BACK = 'harvester_idle/idle_back_';
-    static SPRITE_SHEET_PREFIX_HARVESTER_MOVE_FRONT = 'harvester_move/move_front_';
-    static SPRITE_SHEET_PREFIX_HARVESTER_MOVE_BACK = 'harvester_move/move_back_';
-
-    // Animation keys
-    static ANIM_TRACTOR_KEY_MOVE_FRONT = 'tractor_move_front';
-    static ANIM_TRACTOR_KEY_MOVE_BACK = 'tractor_move_back';
-    static ANIM_TRACTOR_KEY_IDLE_FRONT = 'tractor_idle_front';
-    static ANIM_TRACTOR_KEY_IDLE_BACK = 'tractor_idle_back';
-
-    static ANIM_HARVESTER_KEY_MOVE_FRONT = 'harvester_move_front';
-    static ANIM_HARVESTER_KEY_MOVE_BACK = 'harvester_move_back';
-    static ANIM_HARVESTER_KEY_IDLE_FRONT = 'harvester_idle_front';
-    static ANIM_HARVESTER_KEY_IDLE_BACK = 'harvester_idle_back';
-
-    private availableVehicles = ['harvester', 'tractor'];
+    private availableVehicles: Vehicle[] = [];
     private selectedPlayerModelIndex = 0;
 
     private TILEMAP_SIZE = 40;
@@ -116,7 +101,10 @@ export class TileScene extends Phaser.Scene {
         this.createLayers();
         this.addGroundTiles();
         this.addObjectTiles();
+
+        this.createVehicles();
         this.addPlayer();
+
         this.addParticles();
         this.addEventListeners();
 
@@ -158,11 +146,6 @@ export class TileScene extends Phaser.Scene {
             repeat: -1,
             frameRate: 12
         })
-         */
-
-        /**
-         * HARVESTER
-         */
 
         this.anims.create({
             key: TileScene.ANIM_HARVESTER_KEY_IDLE_FRONT,
@@ -191,6 +174,7 @@ export class TileScene extends Phaser.Scene {
             repeat: -1,
             frameRate: 12
         })
+        */
     }
 
     private createAudio() {
@@ -229,10 +213,15 @@ export class TileScene extends Phaser.Scene {
         }
     }
 
+    private createVehicles() {
+        this.availableVehicles = [new Tractor(this, 0, 0), new Harvester(this, 0, 0)];
+    }
+
     private createLayers() {
         this.groundLayer = this.add.layer();
         this.renderObjectsLayer = this.add.layer();
     }
+
 
     private updateCartesianTilePoints() {
 
@@ -430,7 +419,7 @@ export class TileScene extends Phaser.Scene {
         const x = renderPlayerPosition.x;
         const y = renderPlayerPosition.y - this.ISO_TILE_HEIGHT * 0.5;
 
-        this.renderPlayerVehicle = new Tractor(this, x, y);
+        this.renderPlayerVehicle = this.availableVehicles[this.selectedPlayerModelIndex];
         this.renderObjectsLayer.add(this.renderPlayerVehicle);
     }
 
@@ -467,13 +456,14 @@ export class TileScene extends Phaser.Scene {
      */
     private selectVehicle(index: number) {
         const body = this.logicPlayer.body as Phaser.Physics.Arcade.Body;
-        switch (this.availableVehicles[index]) {
-            case 'tractor':
-                body.setSize(64, 64);
-                break;
-            case 'harvester':
-                body.setSize(128, 128);
-                break;
+        const selectedVehicle = this.availableVehicles[index];
+
+        if (selectedVehicle instanceof Tractor) {
+            body.setSize(64, 64);
+        }
+
+        if (selectedVehicle instanceof Harvester) {
+            body.setSize(128, 128);
         }
     }
 
