@@ -1,7 +1,4 @@
-import CursorKeys = Phaser.Types.Input.Keyboard.CursorKeys;
-import {IsoImage} from "../objects/isoImage";
 import Image = Phaser.GameObjects.Image;
-import Sprite = Phaser.GameObjects.Sprite;
 import Point = Phaser.Geom.Point;
 import Layer = Phaser.GameObjects.Layer;
 import Group = Phaser.Physics.Arcade.Group;
@@ -9,6 +6,7 @@ import HTML5AudioSound = Phaser.Sound.HTML5AudioSound;
 import NoAudioSound = Phaser.Sound.NoAudioSound;
 import WebAudioSound = Phaser.Sound.WebAudioSound;
 import ParticleEmitter = Phaser.GameObjects.Particles.ParticleEmitter;
+import {IsoImage} from "../objects/isoImage";
 import {Controls} from "../misc/Controls";
 import {Tractor} from "../objects/Tractor";
 import {Vehicle} from "../objects/base/Vehicle";
@@ -17,9 +15,6 @@ import {Harvester} from "../objects/Harvester";
 export class TileScene extends Phaser.Scene {
 
     static GAME_ATLAS_KEY = 'gameAssets';
-
-    private availableVehicles: Vehicle[] = [];
-    private selectedPlayerModelIndex = 1;
 
     private TILEMAP_SIZE = 40;
 
@@ -35,6 +30,12 @@ export class TileScene extends Phaser.Scene {
      */
     private INNER_MOST_BLANKS_TILE_SIZE = 9;
 
+    private availableVehicles: Vehicle[] = [];
+
+    private selectedPlayerModelIndex = 1;
+
+    private MOVE_SPEED = 0.1;
+
     private isoGridHeight: number;
 
     private isoGridWidth: number;
@@ -44,9 +45,6 @@ export class TileScene extends Phaser.Scene {
      * @private
      */
     private isoGridGlobalCenter: Point;
-
-    // px / ms
-    private MOVE_SPEED = 0.1;
 
     private moveDir = {x: 0, y: 0};
 
@@ -65,8 +63,11 @@ export class TileScene extends Phaser.Scene {
     private playerFacingDir = 1;
 
     // Audio
-    private audioTractorEngine: HTML5AudioSound | WebAudioSound | NoAudioSound;
+    private audioEngine: HTML5AudioSound | WebAudioSound | NoAudioSound;
+
     private audioHarvesting: HTML5AudioSound | WebAudioSound | NoAudioSound;
+
+    private audioHonk: HTML5AudioSound | WebAudioSound | NoAudioSound;
 
     // Particles
     private particleEmitterCrops: ParticleEmitter;
@@ -114,8 +115,9 @@ export class TileScene extends Phaser.Scene {
         const backgroundTheme = this.sound.add('backgroundTheme', {loop: true});
         backgroundTheme.play();
 
-        this.audioTractorEngine = this.sound.add('tractorEngine', {loop: true});
+        this.audioEngine = this.sound.add('tractorEngine', {loop: true});
         this.audioHarvesting = this.sound.add('harvesting', {loop: false});
+        this.audioHonk = this.sound.add('honk', {loop: false});
     }
 
     private handlePlayerCollision(player: any, object: any) {
@@ -162,7 +164,6 @@ export class TileScene extends Phaser.Scene {
         this.renderPlayerVehicle = this.availableVehicles[this.selectedPlayerModelIndex];
         this.renderObjectsLayer.add(this.availableVehicles[0]);
         this.renderObjectsLayer.add(this.availableVehicles[1]);
-
     }
 
     private createLayers() {
@@ -256,17 +257,16 @@ export class TileScene extends Phaser.Scene {
 
     private updateAudio() {
         if (this.moveDir.x === 0 && this.moveDir.y === 0) {
-            this.audioTractorEngine.setVolume(0.3);
-            this.audioTractorEngine.applyConfig();
+            this.audioEngine.setVolume(0.3);
+            this.audioEngine.applyConfig();
         } else {
-            this.audioTractorEngine.setVolume(0.7);
-            this.audioTractorEngine.applyConfig();
+            this.audioEngine.setVolume(0.7);
+            this.audioEngine.applyConfig();
         }
 
-        if (!this.audioTractorEngine.isPlaying) {
-            this.audioTractorEngine.play();
+        if (!this.audioEngine.isPlaying) {
+            this.audioEngine.play();
         }
-
     }
 
     private addGroundTiles() {
@@ -274,7 +274,12 @@ export class TileScene extends Phaser.Scene {
             const point = this.getCartTilePosition(inPoint);
             const frame = Phaser.Math.RND.pick(['object/ground_2.png', 'object/ground_1.png']);
             const isoPoint = this.cartesianToIsometric(point);
-            this.groundLayer.add(this.make.image({x: (isoPoint.x - this.ISO_TILE_WIDTH * 0.5), y: (isoPoint.y - this.ISO_TILE_HEIGHT * 0.5), key: TileScene.GAME_ATLAS_KEY, frame: frame}))
+            this.groundLayer.add(this.make.image({
+                x: (isoPoint.x - this.ISO_TILE_WIDTH * 0.5),
+                y: (isoPoint.y - this.ISO_TILE_HEIGHT * 0.5),
+                key: TileScene.GAME_ATLAS_KEY,
+                frame: frame
+            }))
         });
     }
 
@@ -330,7 +335,13 @@ export class TileScene extends Phaser.Scene {
 
             // Create render representation
             const isoPoint = this.cartesianToIsometric(point);
-            const renderObject = new IsoImage({scene: this, x: (isoPoint.x - 32), y: (isoPoint.y - 32), texture: TileScene.GAME_ATLAS_KEY, frame: 'object/cornfield.png'}, index);
+            const renderObject = new IsoImage({
+                scene: this,
+                x: (isoPoint.x - 32),
+                y: (isoPoint.y - 32),
+                texture: TileScene.GAME_ATLAS_KEY,
+                frame: 'object/cornfield.png'
+            }, index);
             this.renderObjectsLayer.add(renderObject);
         });
 
@@ -382,6 +393,11 @@ export class TileScene extends Phaser.Scene {
                     break;
                 case Controls.INPUT_ACTION_EVENT_KEY_BUTTON_R:
                     this.cyclePlayerVehicle(1);
+                    break;
+                case Controls.INPUT_ACTION_EVENT_KEY_BUTTON_A:
+                    if (!this.audioHonk.isPlaying) {
+                        this.audioHonk.play();
+                    }
                     break;
             }
         })

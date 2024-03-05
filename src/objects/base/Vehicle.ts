@@ -14,6 +14,5 @@ export abstract class Vehicle extends Phaser.GameObjects.Sprite {
         this.createAnimations();
     }
 
-    protected createAnimations() {}
-
+    protected abstract createAnimations(): void;
 }

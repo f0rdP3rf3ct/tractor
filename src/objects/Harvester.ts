@@ -22,31 +22,54 @@ export class Harvester extends Vehicle {
     protected createAnimations() {
         this.anims.create({
             key: 'harvester_move_front',
-            frames: this.anims.generateFrameNames(Vehicle.ATLAS_KEY, {start: 1, end: 6, zeroPad: 4, prefix: Harvester.SPRITE_SHEET_PREFIX_HARVESTER_MOVE_FRONT, suffix: '.png'}),
+            frames: this.anims.generateFrameNames(Vehicle.ATLAS_KEY, {
+                start: 1,
+                end: 6,
+                zeroPad: 4,
+                prefix: Harvester.SPRITE_SHEET_PREFIX_HARVESTER_MOVE_FRONT,
+                suffix: '.png'
+            }),
             repeat: -1,
             frameRate: 12
         })
 
         this.anims.create({
             key: 'harvester_move_back',
-            frames: this.anims.generateFrameNames(Vehicle.ATLAS_KEY, {start: 1, end: 6, zeroPad: 4, prefix: Harvester.SPRITE_SHEET_PREFIX_HARVESTER_MOVE_BACK, suffix: '.png'}),
+            frames: this.anims.generateFrameNames(Vehicle.ATLAS_KEY, {
+                start: 1,
+                end: 6,
+                zeroPad: 4,
+                prefix: Harvester.SPRITE_SHEET_PREFIX_HARVESTER_MOVE_BACK,
+                suffix: '.png'
+            }),
             repeat: -1,
             frameRate: 12
         })
 
         this.anims.create({
             key: 'harvester_idle_front',
-            frames: this.anims.generateFrameNames(Vehicle.ATLAS_KEY, {start: 1, end: 1, zeroPad: 4, prefix: Harvester.SPRITE_SHEET_PREFIX_HARVESTER_IDLE_FRONT, suffix: '.png'}),
+            frames: this.anims.generateFrameNames(Vehicle.ATLAS_KEY, {
+                start: 1,
+                end: 1,
+                zeroPad: 4,
+                prefix: Harvester.SPRITE_SHEET_PREFIX_HARVESTER_IDLE_FRONT,
+                suffix: '.png'
+            }),
             repeat: -1,
             frameRate: 12
         })
 
         this.anims.create({
             key: 'harvester_idle_back',
-            frames: this.anims.generateFrameNames(Vehicle.ATLAS_KEY, {start: 1, end: 1, zeroPad: 4, prefix: Harvester.SPRITE_SHEET_PREFIX_HARVESTER_IDLE_BACK, suffix: '.png'}),
+            frames: this.anims.generateFrameNames(Vehicle.ATLAS_KEY, {
+                start: 1,
+                end: 1,
+                zeroPad: 4,
+                prefix: Harvester.SPRITE_SHEET_PREFIX_HARVESTER_IDLE_BACK,
+                suffix: '.png'
+            }),
             repeat: -1,
             frameRate: 12
         })
     }
-
 }
