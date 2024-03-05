@@ -27,7 +27,7 @@ export class TileScene extends Phaser.Scene {
 
     private INNER_MOST_BLANKS_TILE_SIZE = 9;
 
-    private MOVE_SPEED = 0.1;
+    private MOVE_SPEED = 0.2;
 
     private availableVehicles: Vehicle[] = [];
 
