@@ -55,7 +55,7 @@ export class Controls {
     }
 
     private setupGamePadControls() {
-        debugger;
+
         /* connect gamepad if "connect" event is not fired */
         if (this.scene.input.gamepad.total) {
             this.pad = this.scene.input.gamepad.pad1;
@@ -118,8 +118,14 @@ export class Controls {
             if (event.keyCode === Phaser.Input.Keyboard.KeyCodes.SPACE) {
                 this.inputActionEvent.emit(Controls.INPUT_ACTION_EVENT_KEY, Controls.INPUT_ACTION_EVENT_KEY_BUTTON_A);
             }
-
+            if (event.keyCode === Phaser.Input.Keyboard.KeyCodes.Y) {
+                this.inputActionEvent.emit(Controls.INPUT_ACTION_EVENT_KEY, Controls.INPUT_ACTION_EVENT_KEY_BUTTON_L);
+            }
+            if (event.keyCode === Phaser.Input.Keyboard.KeyCodes.X) {
+                this.inputActionEvent.emit(Controls.INPUT_ACTION_EVENT_KEY, Controls.INPUT_ACTION_EVENT_KEY_BUTTON_R);
+            }
         });
+
     }
 
     update() {
