@@ -157,13 +157,12 @@ export class TileScene extends Phaser.Scene {
 
         this.availableVehicles = [new Tractor(this, x, y), new Harvester(this, x, y)];
 
-        this.add.existing(this.availableVehicles[0])
-        this.add.existing(this.availableVehicles[1])
-        this.cyclePlayerVehicle(0);
+        this.availableVehicles.forEach((vehicle) => {
+           this.add.existing(vehicle);
+           this.renderObjectsLayer.add(vehicle);
+        });
 
-        this.renderPlayerVehicle = this.availableVehicles[this.selectedPlayerModelIndex];
-        this.renderObjectsLayer.add(this.availableVehicles[0]);
-        this.renderObjectsLayer.add(this.availableVehicles[1]);
+        this.cyclePlayerVehicle(0);
     }
 
     private createLayers() {
