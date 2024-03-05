@@ -11,6 +11,7 @@ import {Controls} from "../misc/Controls";
 import {Tractor} from "../objects/Tractor";
 import {Vehicle} from "../objects/base/Vehicle";
 import {Harvester} from "../objects/Harvester";
+import {CartesianHelper} from "../misc/CartesianHelper";
 
 export class TileScene extends Phaser.Scene {
 
@@ -24,17 +25,13 @@ export class TileScene extends Phaser.Scene {
 
     private ISO_TILE_HEIGHT = 32;
 
-    /**
-     * How many tiles to leave blank in the center of the grid
-     * @private
-     */
     private INNER_MOST_BLANKS_TILE_SIZE = 9;
+
+    private MOVE_SPEED = 0.1;
 
     private availableVehicles: Vehicle[] = [];
 
     private selectedPlayerModelIndex = 1;
-
-    private MOVE_SPEED = 0.1;
 
     private isoGridHeight: number;
 
@@ -74,6 +71,8 @@ export class TileScene extends Phaser.Scene {
 
     private controls: Controls;
 
+    private cartesianHelper: CartesianHelper;
+
     constructor() {
         super({key: 'TileScene'});
     }
@@ -86,6 +85,8 @@ export class TileScene extends Phaser.Scene {
 
     create(): void {
         this.controls = new Controls(this);
+        this.cartesianHelper = new CartesianHelper();
+
         this.collisionGroup = this.physics.add.group();
 
         this.isoGridWidth = this.TILEMAP_SIZE * this.ISO_TILE_WIDTH;
@@ -121,9 +122,12 @@ export class TileScene extends Phaser.Scene {
     }
 
     private handlePlayerCollision(player: any, object: any) {
+
         const index = object.data.get('cartesianIndex');
+
         if (object) {
             object.destroy();
+
             const displayObject = this.renderObjectsLayer.getChildren().filter((child: IsoImage) => {
                 if (child.name === 'player') {
                     return false;
@@ -131,6 +135,7 @@ export class TileScene extends Phaser.Scene {
 
                 return child.getCartesianPointIndex() === index;
             });
+
             if (displayObject) {
                 displayObject[0].destroy()
                 this.audioHarvesting.play();
@@ -141,15 +146,12 @@ export class TileScene extends Phaser.Scene {
     }
 
     private createCartesianTilePoints() {
-        for (let x = 0; x <= this.TILEMAP_SIZE; x++) {
-            for (let y = 0; y <= this.TILEMAP_SIZE; y++) {
-                this.cartesianPoints.push(new Point(x, y));
-            }
-        }
+        this.cartesianPoints = this.cartesianHelper.createCartesianPoints(this.TILEMAP_SIZE);
     }
 
     private createVehicles() {
-        const cartPlayerPosition = this.getCartTilePosition(this.getTileCenter());
+        const centerPoint = this.cartesianHelper.getCenterOfPoints(this.cartesianPoints);
+        const cartPlayerPosition = this.cartesianHelper.getCartesianTilePosition(centerPoint, this.TILE_SIZE);
         const renderPlayerPosition = this.cartesianToIsometric(cartPlayerPosition);
 
         const x = renderPlayerPosition.x;
@@ -158,8 +160,8 @@ export class TileScene extends Phaser.Scene {
         this.availableVehicles = [new Tractor(this, x, y), new Harvester(this, x, y)];
 
         this.availableVehicles.forEach((vehicle) => {
-           this.add.existing(vehicle);
-           this.renderObjectsLayer.add(vehicle);
+            this.add.existing(vehicle);
+            this.renderObjectsLayer.add(vehicle);
         });
 
         this.cyclePlayerVehicle(0);
@@ -211,43 +213,9 @@ export class TileScene extends Phaser.Scene {
         });
     }
 
-    /**
-     * @private
-     */
-    private getInnerMostCartesianPoints(): Point[] {
-        const numRows = this.TILEMAP_SIZE;
-        const numCols = this.TILEMAP_SIZE;
-
-        let startX = Math.floor((numRows - this.INNER_MOST_BLANKS_TILE_SIZE) / 2);
-        let startY = Math.floor((numCols - this.INNER_MOST_BLANKS_TILE_SIZE) / 2);
-
-        let endX = startX + this.INNER_MOST_BLANKS_TILE_SIZE - 1;
-        let endY = startY + this.INNER_MOST_BLANKS_TILE_SIZE - 1;
-
-        // Ensure the calculated indices are within bounds
-        startX = Math.max(startX, 0);
-        startY = Math.max(startY, 0);
-        endX = Math.min(endX, numCols - 1);
-        endY = Math.min(endY, numRows - 1);
-
-        let innerMostPoints: Point[] = [];
-
-        for (let i = startY; i <= endY; i++) {
-            for (let j = startX; j <= endX; j++) {
-                innerMostPoints.push(new Point(j, i));
-            }
-        }
-
-        return innerMostPoints;
-    }
-
-    private getCartTilePosition(point: Point) {
-        return new Point(point.x * this.TILE_SIZE, point.y * this.TILE_SIZE);
-    }
-
     private updateLogic() {
         this.collisionGroup.getChildren().forEach((object) => {
-            const cartTilePosition = this.getCartTilePosition(this.cartesianPoints[object.data.get('cartesianIndex')]);
+            const cartTilePosition = this.cartesianHelper.getCartesianTilePosition(this.cartesianPoints[object.data.get('cartesianIndex')], this.TILE_SIZE);
             const body = object.body as Phaser.Physics.Arcade.Body;
             body.x = cartTilePosition.x;
             body.y = cartTilePosition.y;
@@ -270,7 +238,7 @@ export class TileScene extends Phaser.Scene {
 
     private addGroundTiles() {
         this.cartesianPoints.forEach((inPoint) => {
-            const point = this.getCartTilePosition(inPoint);
+            const point = this.cartesianHelper.getCartesianTilePosition(inPoint, this.TILE_SIZE);
             const frame = Phaser.Math.RND.pick(['object/ground_2.png', 'object/ground_1.png']);
             const isoPoint = this.cartesianToIsometric(point);
             this.groundLayer.add(this.make.image({
@@ -282,34 +250,9 @@ export class TileScene extends Phaser.Scene {
         });
     }
 
-    /**
-     * Returns a random set of cartesian points
-     * @private
-     */
-    private getRandomCartesianPoints(): number[] {
-        const seed = (this.TILEMAP_SIZE * this.TILEMAP_SIZE).toString();
-        Phaser.Math.RND.sow([seed]);
-
-        const numberOfRandomIndices = 1200;
-        const originalArray = this.cartesianPoints.slice();
-        const randomIndicesArray: number[] = [];
-
-        for (let i = 0; i < numberOfRandomIndices; i++) {
-            const randomIndex = Phaser.Math.RND.integerInRange(0, originalArray.length - 1);
-            originalArray.splice(randomIndex, 1);
-            if (randomIndicesArray.indexOf(randomIndex) === -1) {
-                randomIndicesArray.push(randomIndex);
-            }
-        }
-
-        return randomIndicesArray;
-    }
-
     private addObjectTiles() {
-        // Tiles to be populated...
-        const objectPositionIndices = this.getRandomCartesianPoints();
 
-        const innerMostPoints = this.getInnerMostCartesianPoints();
+        const innerMostPoints = this.cartesianHelper.getInnerMostCartesianPoints(this.TILEMAP_SIZE, this.INNER_MOST_BLANKS_TILE_SIZE);
 
         this.cartesianPoints.forEach((inPoint, index) => {
 
@@ -322,7 +265,7 @@ export class TileScene extends Phaser.Scene {
             }
 
             // Create logic representation
-            const point = this.getCartTilePosition(this.cartesianPoints[index]);
+            const point = this.cartesianHelper.getCartesianTilePosition(this.cartesianPoints[index], this.TILE_SIZE);
             const logicObject = this.physics.add.image(point.x, point.y, 'cartDebugObject');
             logicObject.setDataEnabled();
             logicObject.data.set('cartesianIndex', index);
@@ -346,23 +289,9 @@ export class TileScene extends Phaser.Scene {
 
     }
 
-    private getTileCenter(): Point {
-        let totalX = 0;
-        let totalY = 0;
-
-        for (var i = 0; i < this.cartesianPoints.length; i++) {
-            totalX += this.cartesianPoints[i].x;
-            totalY += this.cartesianPoints[i].y;
-        }
-
-        const averageX = Math.floor(totalX / this.cartesianPoints.length);
-        const averageY = Math.floor(totalY / this.cartesianPoints.length);
-
-        return new Point(averageX, averageY);
-    }
-
     private addPhysicsPlayer() {
-        const cartPlayerPosition = this.getCartTilePosition(this.getTileCenter());
+        const centerPoint = this.cartesianHelper.getCenterOfPoints(this.cartesianPoints);
+        const cartPlayerPosition = this.cartesianHelper.getCartesianTilePosition(centerPoint, this.TILE_SIZE);
 
         this.logicPlayer = this.physics.add.image(cartPlayerPosition.x, cartPlayerPosition.y, 'cartDebugPlayer');
         this.logicPlayer.alpha = 0.2;
@@ -534,7 +463,7 @@ export class TileScene extends Phaser.Scene {
     private renderIsometric(delta: number) {
         // this.graphics.clear();
         this.cartesianPoints.forEach((inPoint, i) => {
-            const point = this.getCartTilePosition(inPoint);
+            const point = this.cartesianHelper.getCartesianTilePosition(inPoint, this.TILE_SIZE);
             // ground
             const isoPoint = this.cartesianToIsometric(point);
             const groundTile = this.groundLayer.getChildren()[i] as Phaser.GameObjects.Image;
@@ -552,7 +481,7 @@ export class TileScene extends Phaser.Scene {
                 return;
             }
 
-            const point = this.getCartTilePosition(this.cartesianPoints[isoImage.getCartesianPointIndex()]);
+            const point = this.cartesianHelper.getCartesianTilePosition(this.cartesianPoints[isoImage.getCartesianPointIndex()], this.TILE_SIZE);
 
             const isoPoint = this.cartesianToIsometric(point);
             isoImage.x = isoPoint.x;
