@@ -37,6 +37,8 @@ export class TileScene extends Phaser.Scene {
 
     private isoGridWidth: number;
 
+    private lastDirection: string = 'right';
+
     /**
      * Point to position isogrid in the center of the screen
      * @private
@@ -372,36 +374,43 @@ export class TileScene extends Phaser.Scene {
         let inputLocked = false;
 
         if (this.controls.up() && !inputLocked) {
+            this.lastDirection = 'up';
             this.moveDir.y = -1;
-            this.playerFacingDir = -1;
 
-            this.renderPlayerVehicle.scaleX = -1;
+            this.playerFacingDir = this.renderPlayerVehicle.scaleX = -1;
+
             this.renderPlayerVehicle.play(this.renderPlayerVehicle.ANIM_KEY_MOVE_FRONT, true);
 
             inputLocked = true;
         }
 
         if (this.controls.down() && !inputLocked) {
-            this.moveDir.y = 1;
-            this.playerFacingDir = -1;
+            this.lastDirection = 'down';
 
-            this.renderPlayerVehicle.scaleX = -1;
+            this.moveDir.y = 1;
+
+            this.playerFacingDir = this.renderPlayerVehicle.scaleX = -1;
+
             this.renderPlayerVehicle.play(this.renderPlayerVehicle.ANIM_KEY_MOVE_BACK, true);
 
             inputLocked = true;
         }
 
         if (this.controls.left() && !inputLocked) {
-            this.moveDir.x = 1;
-            this.playerFacingDir = 1;
+            this.lastDirection = 'left';
 
-            this.renderPlayerVehicle.scaleX = 1;
+            this.moveDir.x = 1;
+
+            this.playerFacingDir = this.renderPlayerVehicle.scaleX = 1;
+
             this.renderPlayerVehicle.play(this.renderPlayerVehicle.ANIM_KEY_MOVE_BACK, true);
 
             inputLocked = true;
         }
 
         if (this.controls.right() && !inputLocked) {
+            this.lastDirection = 'right';
+
             this.moveDir.x = -1;
             this.playerFacingDir = 1;
 
@@ -412,12 +421,12 @@ export class TileScene extends Phaser.Scene {
         }
 
         if (this.moveDir.x === 0 && this.moveDir.y === 0) {
-            if (this.playerFacingDir === 1) {
-                this.renderPlayerVehicle.play(this.renderPlayerVehicle.ANIM_KEY_IDLE_FRONT, true);
+            if (this.lastDirection === 'down' || this.lastDirection === 'left') {
+                this.renderPlayerVehicle.play(this.renderPlayerVehicle.ANIM_KEY_IDLE_BACK, true);
             }
 
-            if (this.playerFacingDir === -1) {
-                this.renderPlayerVehicle.play(this.renderPlayerVehicle.ANIM_KEY_IDLE_BACK, true);
+            if (this.lastDirection === 'up' || this.lastDirection === 'right') {
+                this.renderPlayerVehicle.play(this.renderPlayerVehicle.ANIM_KEY_IDLE_FRONT, true);
             }
         }
     }
