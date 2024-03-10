@@ -12,9 +12,13 @@ import {Tractor} from "../objects/Tractor";
 import {Vehicle} from "../objects/base/Vehicle";
 import {Harvester} from "../objects/Harvester";
 import {CartesianHelper} from "../misc/CartesianHelper";
+import {InGameUI} from "../objects/InGameUI";
 
 export class TileScene extends Phaser.Scene {
 
+    /**
+     * Constants
+     */
     static GAME_ATLAS_KEY = 'gameAssets';
 
     private TILEMAP_SIZE = 40;
@@ -29,6 +33,10 @@ export class TileScene extends Phaser.Scene {
 
     private MOVE_SPEED = 0.2;
 
+    /**
+     * Variables
+     */
+
     private availableVehicles: Vehicle[] = [];
 
     private selectedPlayerModelIndex = 1;
@@ -39,13 +47,11 @@ export class TileScene extends Phaser.Scene {
 
     private lastDirection: string = 'right';
 
-    /**
-     * Point to position isogrid in the center of the screen
-     * @private
-     */
-    private isoGridGlobalCenter: Point;
+    private playerFacingDir = 1;
 
     private moveDir = {x: 0, y: 0};
+
+    private isoGridGlobalCenter: Point;
 
     private cartesianPoints: Point[] = [];
 
@@ -59,7 +65,6 @@ export class TileScene extends Phaser.Scene {
 
     private collisionGroup: Group;
 
-    private playerFacingDir = 1;
 
     // Audio
     private audioEngine: HTML5AudioSound | WebAudioSound | NoAudioSound;
@@ -112,6 +117,11 @@ export class TileScene extends Phaser.Scene {
         this.addEventListeners();
 
         this.physics.add.overlap(this.logicPlayer, this.collisionGroup, this.handlePlayerCollision, null, this);
+
+
+        const inGameUI = new InGameUI(this, 400, 300);
+        this.add.existing(inGameUI);
+
     }
 
     private createAudio() {
@@ -369,14 +379,18 @@ export class TileScene extends Phaser.Scene {
 
     private updateInput() {
 
+        if (this.controls) {
+            this.controls.update();
+        }
+
         this.moveDir.x = 0;
         this.moveDir.y = 0;
         let inputLocked = false;
 
         if (this.controls.up() && !inputLocked) {
             this.lastDirection = 'up';
-            this.moveDir.y = -1;
 
+            this.moveDir.y = -1;
             this.playerFacingDir = this.renderPlayerVehicle.scaleX = -1;
 
             this.renderPlayerVehicle.play(this.renderPlayerVehicle.ANIM_KEY_MOVE_FRONT, true);
@@ -388,7 +402,6 @@ export class TileScene extends Phaser.Scene {
             this.lastDirection = 'down';
 
             this.moveDir.y = 1;
-
             this.playerFacingDir = this.renderPlayerVehicle.scaleX = -1;
 
             this.renderPlayerVehicle.play(this.renderPlayerVehicle.ANIM_KEY_MOVE_BACK, true);
@@ -400,7 +413,6 @@ export class TileScene extends Phaser.Scene {
             this.lastDirection = 'left';
 
             this.moveDir.x = 1;
-
             this.playerFacingDir = this.renderPlayerVehicle.scaleX = 1;
 
             this.renderPlayerVehicle.play(this.renderPlayerVehicle.ANIM_KEY_MOVE_BACK, true);
@@ -412,9 +424,8 @@ export class TileScene extends Phaser.Scene {
             this.lastDirection = 'right';
 
             this.moveDir.x = -1;
-            this.playerFacingDir = 1;
+            this.playerFacingDir = this.renderPlayerVehicle.scaleX = 1;
 
-            this.renderPlayerVehicle.scaleX = 1;
             this.renderPlayerVehicle.play(this.renderPlayerVehicle.ANIM_KEY_MOVE_FRONT, true);
 
             inputLocked = true;
@@ -432,10 +443,6 @@ export class TileScene extends Phaser.Scene {
     }
 
     update(time: number, delta: number) {
-
-        if (this.controls) {
-            this.controls.update();
-        }
 
         this.updateInput();
         this.updateCartesianTilePoints();

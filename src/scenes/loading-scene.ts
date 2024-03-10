@@ -1,6 +1,7 @@
 import {TileScene} from "./tile-scene";
 import {Controls} from "../misc/Controls";
 import GamepadPlugin = Phaser.Input.Gamepad.GamepadPlugin;
+import {InGameUI} from "../objects/InGameUI";
 
 export class LoadingScene extends Phaser.Scene {
 
@@ -38,6 +39,7 @@ export class LoadingScene extends Phaser.Scene {
     private loadAssets() {
         // sprites
         this.load.atlas(TileScene.GAME_ATLAS_KEY, '../assets/spritesheets/gameAssets.png', '../assets/spritesheets/gameAssets.json');
+        this.load.atlas(InGameUI.INGAME_UI_KEY, '../assets/spritesheets/uiIngame.png', '../assets/spritesheets/uiIngame.json');
 
         // audio
         this.load.audio('backgroundTheme', ['../assets/audio/backgroundTheme01.mp3', '../assets/audio/backgroundTheme01.ogg']);
