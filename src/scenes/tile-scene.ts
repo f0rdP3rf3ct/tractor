@@ -12,9 +12,7 @@ import {Tractor} from "../objects/Tractor";
 import {Vehicle} from "../objects/base/Vehicle";
 import {Harvester} from "../objects/Harvester";
 import {CartesianHelper} from "../misc/CartesianHelper";
-import {InGameUI} from "../objects/InGameUI";
 import {State, StateMachineInterface} from "../interfaces/stateMachine.interface";
-import {PlayState} from "../states/playState";
 import {MenuState} from "../states/MenuState";
 
 
@@ -143,12 +141,8 @@ export class TileScene extends Phaser.Scene implements StateMachineInterface {
         this.createVehicles();
 
         this.addParticles();
-        // this.addEventListeners();
 
         this.physics.add.overlap(this.logicPlayer, this.collisionGroup, this.handlePlayerCollision, null, this);
-
-       //  const inGameUI = new InGameUI(this, 400, 300);
-       //  this.add.existing(inGameUI);
 
         this.changeState(new MenuState(this))
     }

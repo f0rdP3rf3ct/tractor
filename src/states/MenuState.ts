@@ -1,10 +1,9 @@
 import {State, StateMachineInterface} from "../interfaces/stateMachine.interface";
-import {Scene} from "phaser";
 import {TileScene} from "../scenes/tile-scene";
 import {Controls} from "../misc/Controls";
-import Point = Phaser.Geom.Point;
-import {PlayState} from "./playState";
+import {PlayState} from "./PlayState";
 import {InGameUI} from "../objects/InGameUI";
+import Point = Phaser.Geom.Point;
 
 export class MenuState implements State {
 
