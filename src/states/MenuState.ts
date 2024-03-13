@@ -4,6 +4,7 @@ import {Controls} from "../misc/Controls";
 import {PlayState} from "./PlayState";
 import {InGameUI} from "../objects/InGameUI";
 import Point = Phaser.Geom.Point;
+import {CountDownState} from "./CountDownState";
 
 export class MenuState implements State {
 
@@ -38,7 +39,7 @@ export class MenuState implements State {
         this.controls.inputActionEvent.addListener(Controls.INPUT_ACTION_EVENT_KEY, (key: string) => {
             switch (key) {
                 case Controls.INPUT_ACTION_EVENT_KEY_BUTTON_A:
-                    this.scene.changeState(new PlayState(this.scene));
+                    this.scene.changeState(new CountDownState(this.scene));
                     break;
             }
         })

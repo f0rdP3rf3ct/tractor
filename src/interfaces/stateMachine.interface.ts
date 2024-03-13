@@ -1,4 +1,5 @@
 import {Scene} from "phaser";
+import {TileScene} from "../scenes/tile-scene";
 
 export interface State {
 
