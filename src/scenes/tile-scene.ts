@@ -13,8 +13,17 @@ import {Vehicle} from "../objects/base/Vehicle";
 import {Harvester} from "../objects/Harvester";
 import {CartesianHelper} from "../misc/CartesianHelper";
 import {InGameUI} from "../objects/InGameUI";
+import {State, StateMachineInterface} from "../interfaces/stateMachine.interface";
+import {PlayState} from "../states/playState";
+import {MenuState} from "../states/MenuState";
 
-export class TileScene extends Phaser.Scene {
+
+export class TileScene extends Phaser.Scene implements StateMachineInterface {
+
+    /**
+     * Game State
+     */
+    private currentGameState: State;
 
     /**
      * Constants
@@ -49,7 +58,7 @@ export class TileScene extends Phaser.Scene {
 
     private playerFacingDir = 1;
 
-    private moveDir = {x: 0, y: 0};
+    private moveDir: Point = new Point(0, 0);
 
     private isoGridGlobalCenter: Point;
 
@@ -84,6 +93,26 @@ export class TileScene extends Phaser.Scene {
         super({key: 'TileScene'});
     }
 
+    changeState(newState: State): void {
+        if (this.currentGameState) {
+            this.currentGameState.exit();
+        }
+
+        this.currentGameState = newState;
+
+        if (this.currentGameState) {
+            this.currentGameState.enter(this);
+        }
+    }
+
+    getCurrentState(): State {
+        throw new Error("Method not implemented.");
+    }
+
+    updateStateMachine(): void {
+        throw new Error("Method not implemented.");
+    }
+
     preload(): void {
         // debug
         this.load.image('cartDebugObject', '../assets/cartDebugObject.png');
@@ -114,14 +143,14 @@ export class TileScene extends Phaser.Scene {
         this.createVehicles();
 
         this.addParticles();
-        this.addEventListeners();
+        // this.addEventListeners();
 
         this.physics.add.overlap(this.logicPlayer, this.collisionGroup, this.handlePlayerCollision, null, this);
 
+       //  const inGameUI = new InGameUI(this, 400, 300);
+       //  this.add.existing(inGameUI);
 
-        const inGameUI = new InGameUI(this, 400, 300);
-        this.add.existing(inGameUI);
-
+        this.changeState(new MenuState(this))
     }
 
     private createAudio() {
@@ -325,29 +354,17 @@ export class TileScene extends Phaser.Scene {
         });
     }
 
-    private addEventListeners() {
-        this.controls.inputActionEvent.addListener(Controls.INPUT_ACTION_EVENT_KEY, (key: string) => {
-            switch (key) {
-                case Controls.INPUT_ACTION_EVENT_KEY_BUTTON_L:
-                    this.cyclePlayerVehicle(-1);
-                    break;
-                case Controls.INPUT_ACTION_EVENT_KEY_BUTTON_R:
-                    this.cyclePlayerVehicle(1);
-                    break;
-                case Controls.INPUT_ACTION_EVENT_KEY_BUTTON_A:
-                    if (!this.audioHonk.isPlaying) {
-                        this.audioHonk.play();
-                    }
-                    break;
-            }
-        })
+    public playAudioHonk(): void {
+        if (!this.audioHonk.isPlaying) {
+            this.audioHonk.play();
+        }
     }
 
     /**
      * @private
      * @param dir
      */
-    private cyclePlayerVehicle(dir: number) {
+    public cyclePlayerVehicle(dir: number) {
         const nextIndex = this.selectedPlayerModelIndex + dir;
 
         if (nextIndex > this.availableVehicles.length - 1) {
@@ -377,74 +394,12 @@ export class TileScene extends Phaser.Scene {
     }
 
 
-    private updateInput() {
-
-        if (this.controls) {
-            this.controls.update();
-        }
-
-        this.moveDir.x = 0;
-        this.moveDir.y = 0;
-        let inputLocked = false;
-
-        if (this.controls.up() && !inputLocked) {
-            this.lastDirection = 'up';
-
-            this.moveDir.y = -1;
-            this.playerFacingDir = this.renderPlayerVehicle.scaleX = -1;
-
-            this.renderPlayerVehicle.play(this.renderPlayerVehicle.ANIM_KEY_MOVE_FRONT, true);
-
-            inputLocked = true;
-        }
-
-        if (this.controls.down() && !inputLocked) {
-            this.lastDirection = 'down';
-
-            this.moveDir.y = 1;
-            this.playerFacingDir = this.renderPlayerVehicle.scaleX = -1;
-
-            this.renderPlayerVehicle.play(this.renderPlayerVehicle.ANIM_KEY_MOVE_BACK, true);
-
-            inputLocked = true;
-        }
-
-        if (this.controls.left() && !inputLocked) {
-            this.lastDirection = 'left';
-
-            this.moveDir.x = 1;
-            this.playerFacingDir = this.renderPlayerVehicle.scaleX = 1;
-
-            this.renderPlayerVehicle.play(this.renderPlayerVehicle.ANIM_KEY_MOVE_BACK, true);
-
-            inputLocked = true;
-        }
-
-        if (this.controls.right() && !inputLocked) {
-            this.lastDirection = 'right';
-
-            this.moveDir.x = -1;
-            this.playerFacingDir = this.renderPlayerVehicle.scaleX = 1;
-
-            this.renderPlayerVehicle.play(this.renderPlayerVehicle.ANIM_KEY_MOVE_FRONT, true);
-
-            inputLocked = true;
-        }
-
-        if (this.moveDir.x === 0 && this.moveDir.y === 0) {
-            if (this.lastDirection === 'down' || this.lastDirection === 'left') {
-                this.renderPlayerVehicle.play(this.renderPlayerVehicle.ANIM_KEY_IDLE_BACK, true);
-            }
-
-            if (this.lastDirection === 'up' || this.lastDirection === 'right') {
-                this.renderPlayerVehicle.play(this.renderPlayerVehicle.ANIM_KEY_IDLE_FRONT, true);
-            }
-        }
-    }
-
     update(time: number, delta: number) {
 
-        this.updateInput();
+        if (this.currentGameState) {
+            this.currentGameState.updateState(this);
+        }
+
         this.updateCartesianTilePoints();
         this.updateLogic();
         this.updateAudio();
@@ -514,4 +469,70 @@ export class TileScene extends Phaser.Scene {
             this.renderPlayerVehicle.scaleY = 1 + (0.08 * Math.sin(this.time.now / 100));
         }
     }
+
+    public getLastDirection(): string {
+        return this.lastDirection;
+    }
+
+    public setLastDirection(lastDirection: string) {
+        this.lastDirection = lastDirection;
+    }
+
+    public getMoveDir(): Point {
+        return this.moveDir;
+    }
+
+    public setMoveDir(moveDir: Point) {
+        this.moveDir = moveDir;
+    }
+
+    public setPlayerFacingDirection(direction: number) {
+        this.playerFacingDir = direction;
+    }
+
+    public getPlayerFacingDirection(): number {
+        return this.playerFacingDir;
+    }
+
+    /**
+     * Updates the scale and animation of the rendered player depending on move direction / input
+     */
+    public updateRenderPlayerVehicle() {
+        // Moving UP
+        if (this.moveDir.y === -1 && this.playerFacingDir === -1) {
+            this.renderPlayerVehicle.scaleX = -1;
+            this.renderPlayerVehicle.play(this.renderPlayerVehicle.ANIM_KEY_MOVE_FRONT, true);
+        }
+
+        // Moving DOWN
+        if (this.moveDir.y === 1 && this.playerFacingDir === -1) {
+            this.renderPlayerVehicle.scaleX = -1;
+            this.renderPlayerVehicle.play(this.renderPlayerVehicle.ANIM_KEY_MOVE_BACK, true);
+        }
+
+        // Moving LEFT
+        if (this.moveDir.x === 1 && this.playerFacingDir === 1) {
+            this.renderPlayerVehicle.scaleX = 1;
+            this.renderPlayerVehicle.play(this.renderPlayerVehicle.ANIM_KEY_MOVE_BACK, true);
+        }
+
+        // Moving RIGHT
+        if (this.moveDir.x === -1 && this.playerFacingDir === 1) {
+            this.renderPlayerVehicle.scaleX = 1;
+            this.renderPlayerVehicle.play(this.renderPlayerVehicle.ANIM_KEY_MOVE_FRONT, true);
+        }
+
+        // Not moving AT ALL
+        if (this.moveDir.x === 0 && this.moveDir.y === 0) {
+            if (this.lastDirection === 'down' || this.lastDirection == 'left') {
+                this.renderPlayerVehicle.play(this.renderPlayerVehicle.ANIM_KEY_IDLE_BACK, true);
+            }
+
+            if (this.lastDirection === 'up' || this.lastDirection === 'right') {
+                this.renderPlayerVehicle.play(this.renderPlayerVehicle.ANIM_KEY_IDLE_FRONT, true);
+            }
+        }
+
+    }
+
 }
