@@ -24,8 +24,16 @@ export class PlayState implements State {
     public exit(): void {
     }
 
-    public updateState(stateMachine: StateMachineInterface): void {
+    public updateState(stateMachine: StateMachineInterface, delta: number): void {
         this.updateInput();
+
+        this.scene.updateCartesianTilePoints();
+        this.scene.updateLogic();
+        this.scene.updateAudio();
+        this.scene.updateDepthSortIsometrics();
+        this.scene.updateRenderIsometric(delta);
+        this.scene.updateAnimations();
+
         this.scene.updateRenderPlayerVehicle();
     }
 

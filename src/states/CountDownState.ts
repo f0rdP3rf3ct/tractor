@@ -1,11 +1,10 @@
 import {State, StateMachineInterface} from "../interfaces/stateMachine.interface";
 import {TileScene} from "../scenes/tile-scene";
-import {LoadingScene} from "../scenes/loading-scene";
 import {InGameUI} from "../objects/InGameUI";
+import {PlayState} from "./PlayState";
 import Image = Phaser.GameObjects.Image;
 import Container = Phaser.GameObjects.Container;
 import TweenChainBuilderConfig = Phaser.Types.Tweens.TweenChainBuilderConfig;
-import {PlayState} from "./PlayState";
 
 export class CountDownState implements State {
 
@@ -28,7 +27,7 @@ export class CountDownState implements State {
         this.animContainer.destroy();
     }
 
-    updateState(stateMachine: StateMachineInterface): void {
+    updateState(stateMachine: StateMachineInterface, delta: number): void {
     }
 
     private createAssets() {
@@ -62,8 +61,6 @@ export class CountDownState implements State {
 
     private animateImageAt(index: number): void {
 
-        console.log('animate: ' + index + ' / ' + this.animContainer.getAll().length);
-
         if (index === this.animContainer.getAll().length) {
             this.scene.changeState(new PlayState(this.scene));
             return;
@@ -72,6 +69,8 @@ export class CountDownState implements State {
         const target = this.getImageAt(index);
         target.visible = true;
         target.alpha = 1;
+
+        console.log("starting tween...", target);
 
         const config: TweenChainBuilderConfig = {
             targets: target,
@@ -96,6 +95,7 @@ export class CountDownState implements State {
             }
         };
 
+        this.scene.tweens.chain(config);
     }
 
 }

@@ -5,7 +5,7 @@ export interface State {
 
     enter(stateMachine: StateMachineInterface): void;
 
-    updateState(stateMachine: StateMachineInterface): void;
+    updateState(stateMachine: StateMachineInterface, delta: number): void;
 
     exit(): void
 }
