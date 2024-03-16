@@ -110,8 +110,8 @@ export class TileScene extends Phaser.Scene implements StateMachineInterface {
 
     preload(): void {
         // debug
-        this.load.image('cartDebugObject', '../assets/cartDebugObject.png');
-        this.load.image('cartDebugPlayer', '../assets/cartDebugPlayer.png');
+        this.load.image('cartDebugObject', './assets/cartDebugObject.png');
+        this.load.image('cartDebugPlayer', './assets/cartDebugPlayer.png');
     }
 
     create(): void {
@@ -506,6 +506,10 @@ export class TileScene extends Phaser.Scene implements StateMachineInterface {
         tempPt.y += (Math.floor((cartPt.x + cartPt.y) / 4));
         return tempPt;
     }
+
+    /* ---------------------------------------------------------------
+    * GETTERS & SETTERS
+     ---------------------------------------------------------------*/
 
     public getLastDirection(): string {
         return this.lastDirection;
