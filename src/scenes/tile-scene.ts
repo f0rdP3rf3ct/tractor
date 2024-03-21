@@ -42,7 +42,6 @@ export class TileScene extends Phaser.Scene implements StateMachineInterface {
     /**
      * Variables
      */
-
     private availableVehicles: Vehicle[] = [];
 
     private selectedPlayerModelIndex = 1;
@@ -299,7 +298,7 @@ export class TileScene extends Phaser.Scene implements StateMachineInterface {
     }
 
     /* ---------------------------------------------------------------
-    * UPDATE METHODS
+    | UPDATE METHODS
      ---------------------------------------------------------------*/
 
     public updateCartesianTilePoints() {
