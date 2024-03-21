@@ -6,7 +6,7 @@
         <key>texturePackerVersion</key>
         <string>4.2.3</string>
         <key>fileName</key>
-        <string>/Users/marcgruber/Sites/phaserjs/Tractor2/art/spritesheet/ui.tps</string>
+        <string>/Users/marcgruber/Sites/phaserjs/Tractor2/art/spritesheet/ui_ingame.tps</string>
         <key>autoSDSettings</key>
         <array>
             <struct type="AutoSDSettings">
@@ -141,7 +141,7 @@
             <key>data</key>
             <struct type="DataFile">
                 <key>name</key>
-                <filename>../../assets/spritesheets/uiAssets.json</filename>
+                <filename>../../assets/spritesheets/uiIngame.json</filename>
             </struct>
         </map>
         <key>multiPack</key>
@@ -188,12 +188,15 @@
         </struct>
         <key>individualSpriteSettings</key>
         <map type="IndividualSpriteSettingsMap">
-            <key type="filename">../ui/Logo.png</key>
-            <key type="filename">../ui/background.png</key>
-            <key type="filename">../ui/controls.png</key>
-            <key type="filename">../ui/loading.png</key>
-            <key type="filename">../ui/new_game.png</key>
-            <key type="filename">../ui/selection_arrow.png</key>
+            <key type="filename">../ui_ingame/1.png</key>
+            <key type="filename">../ui_ingame/2.png</key>
+            <key type="filename">../ui_ingame/3.png</key>
+            <key type="filename">../ui_ingame/harvest_all.png</key>
+            <key type="filename">../ui_ingame/hit_space_to_start.png</key>
+            <key type="filename">../ui_ingame/keyboard_controls.png</key>
+            <key type="filename">../ui_ingame/keyboard_title.png</key>
+            <key type="filename">../ui_ingame/modal_background.png</key>
+            <key type="filename">../ui_ingame/modal_title_controls.png</key>
             <struct type="IndividualSpriteSettings">
                 <key>pivotPoint</key>
                 <point_f>0.5,0.5</point_f>
@@ -201,7 +204,7 @@
         </map>
         <key>fileList</key>
         <array>
-            <filename>../ui</filename>
+            <filename>../ui_ingame</filename>
         </array>
         <key>ignoreFileList</key>
         <array/>

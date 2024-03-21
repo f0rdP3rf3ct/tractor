@@ -2,43 +2,43 @@
 
 {
 	"filename": "1.png",
-	"frame": {"x":382,"y":534,"w":92,"h":120},
+	"frame": {"x":382,"y":536,"w":93,"h":122},
 	"rotated": false,
 	"trimmed": true,
-	"spriteSourceSize": {"x":60,"y":41,"w":92,"h":120},
+	"spriteSourceSize": {"x":56,"y":37,"w":93,"h":122},
 	"sourceSize": {"w":201,"h":201}
 },
 {
 	"filename": "2.png",
-	"frame": {"x":382,"y":413,"w":95,"h":119},
+	"frame": {"x":382,"y":413,"w":97,"h":121},
 	"rotated": false,
 	"trimmed": true,
-	"spriteSourceSize": {"x":56,"y":42,"w":95,"h":119},
+	"spriteSourceSize": {"x":52,"y":38,"w":97,"h":121},
 	"sourceSize": {"w":201,"h":201}
 },
 {
 	"filename": "3.png",
-	"frame": {"x":1,"y":656,"w":111,"h":148},
+	"frame": {"x":362,"y":660,"w":113,"h":150},
 	"rotated": false,
 	"trimmed": true,
-	"spriteSourceSize": {"x":46,"y":42,"w":111,"h":148},
+	"spriteSourceSize": {"x":42,"y":38,"w":113,"h":150},
 	"sourceSize": {"w":201,"h":201}
 },
 {
 	"filename": "harvest_all.png",
-	"frame": {"x":114,"y":656,"w":368,"h":123},
+	"frame": {"x":1,"y":613,"w":359,"h":152},
 	"rotated": false,
 	"trimmed": true,
-	"spriteSourceSize": {"x":0,"y":9,"w":368,"h":123},
-	"sourceSize": {"w":368,"h":149}
+	"spriteSourceSize": {"x":0,"y":25,"w":359,"h":152},
+	"sourceSize": {"w":365,"h":201}
 },
 {
 	"filename": "hit_space_to_start.png",
-	"frame": {"x":229,"y":781,"w":137,"h":12},
+	"frame": {"x":124,"y":804,"w":145,"h":18},
 	"rotated": false,
 	"trimmed": true,
-	"spriteSourceSize": {"x":0,"y":1,"w":137,"h":12},
-	"sourceSize": {"w":137,"h":15}
+	"spriteSourceSize": {"x":2,"y":2,"w":145,"h":18},
+	"sourceSize": {"w":147,"h":21}
 },
 {
 	"filename": "keyboard_controls.png",
@@ -50,11 +50,11 @@
 },
 {
 	"filename": "keyboard_title.png",
-	"frame": {"x":114,"y":781,"w":113,"h":17},
+	"frame": {"x":1,"y":804,"w":121,"h":23},
 	"rotated": false,
 	"trimmed": true,
-	"spriteSourceSize": {"x":0,"y":2,"w":113,"h":17},
-	"sourceSize": {"w":113,"h":24}
+	"spriteSourceSize": {"x":2,"y":0,"w":121,"h":23},
+	"sourceSize": {"w":123,"h":24}
 },
 {
 	"filename": "modal_background.png",
@@ -66,10 +66,10 @@
 },
 {
 	"filename": "modal_title_controls.png",
-	"frame": {"x":1,"y":613,"w":272,"h":33},
+	"frame": {"x":1,"y":767,"w":272,"h":35},
 	"rotated": false,
 	"trimmed": true,
-	"spriteSourceSize": {"x":0,"y":3,"w":272,"h":33},
+	"spriteSourceSize": {"x":0,"y":1,"w":272,"h":35},
 	"sourceSize": {"w":272,"h":36}
 }],
 "meta": {
@@ -77,8 +77,8 @@
 	"version": "1.0",
 	"image": "uiIngame.png",
 	"format": "RGBA8888",
-	"size": {"w":488,"h":805},
+	"size": {"w":488,"h":828},
 	"scale": "0.5",
-	"smartupdate": "$TexturePacker:SmartUpdate:b296fb03a725688226198071cdef0bf5:d708f50fdca7cde75bd37b8fb7b0adbd:5b1ddbf19cc5ca3c3ec5ad976b99df27$"
+	"smartupdate": "$TexturePacker:SmartUpdate:5dd2ce2c2687e9683d52ea009ff2718f:7120b1f16b85455b6acc28119a899901:5b1ddbf19cc5ca3c3ec5ad976b99df27$"
 }
 }
