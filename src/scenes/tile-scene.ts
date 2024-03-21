@@ -115,7 +115,7 @@ export class TileScene extends Phaser.Scene implements StateMachineInterface {
     }
 
     create(): void {
-        this.createVariables();
+        this.createMembers();
         this.createAudio();
 
         this.createCartesianTilePoints();
@@ -144,7 +144,7 @@ export class TileScene extends Phaser.Scene implements StateMachineInterface {
      * GAME CREATE METHODS
       ---------------------------------------------------------------*/
 
-    private createVariables() {
+    private createMembers() {
         this.cartesianHelper = new CartesianHelper();
         this.collisionGroup = this.physics.add.group();
         this.isoGridWidth = this.TILEMAP_SIZE * this.ISO_TILE_WIDTH;
@@ -266,10 +266,14 @@ export class TileScene extends Phaser.Scene implements StateMachineInterface {
     }
 
     private createPhysics() {
-        this.physics.add.overlap(this.logicPlayer, this.collisionGroup, this.handlePlayerCollision, null, this);
+        this.physics.add.overlap(this.logicPlayer, this.collisionGroup, this.onPlayerCollision, null, this);
     }
 
-    private handlePlayerCollision(player: any, object: any) {
+    /* ---------------------------------------------------------------
+    * EVENTS
+     ---------------------------------------------------------------*/
+
+    private onPlayerCollision(player: any, object: any) {
 
         const index = object.data.get('cartesianIndex');
 
@@ -506,6 +510,12 @@ export class TileScene extends Phaser.Scene implements StateMachineInterface {
         tempPt.y += (Math.floor((cartPt.x + cartPt.y) / 4));
         return tempPt;
     }
+
+
+    /* ---------------------------------------------------------------
+    * GETTER & SETTER
+     ---------------------------------------------------------------*/
+
 
     public getLastDirection(): string {
         return this.lastDirection;

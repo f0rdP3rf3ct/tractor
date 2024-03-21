@@ -3,6 +3,8 @@ import Point = Phaser.Geom.Point;
 export class CartesianHelper {
 
     /**
+     * Returns an array of Points representing the tilemap
+     *
      * @param tilemapSize
      */
     public createCartesianPoints(tilemapSize: number): Point[] {
@@ -16,6 +18,8 @@ export class CartesianHelper {
     }
 
     /**
+     * Returns an array of Points that build the tile-coordinates in the center of the map.
+     *
      * @param tilemapSize
      * @param blankTileSize
      */
@@ -47,15 +51,17 @@ export class CartesianHelper {
     }
 
     /**
+     * Return a Point containing the position with respect of the defined tileSize
+     *
      * @param point
      * @param tileSize
      */
-    public getCartesianTilePosition(point: Point, tileSize: number) {
+    public getCartesianTilePosition(point: Point, tileSize: number): Point {
         return new Point(point.x * tileSize, point.y * tileSize);
     }
 
     /**
-     * Get average (center) of provided points
+     * Get average (center-coordinates) of an array of provided points
      * @param points
      */
     public getCenterOfPoints(points: Point[]): Point {
