@@ -28,6 +28,7 @@ export class MenuState implements State {
     }
 
     exit(): void {
+        this.removeEventListeners();
         this.inGameUI.destroy();
     }
 
@@ -43,6 +44,10 @@ export class MenuState implements State {
                     break;
             }
         })
+    }
+
+    private removeEventListeners(): void {
+        this.controls.inputActionEvent.removeListener(Controls.INPUT_ACTION_EVENT_KEY);
     }
 
     private updateInput() {
