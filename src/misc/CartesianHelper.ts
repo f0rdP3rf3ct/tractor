@@ -78,4 +78,15 @@ export class CartesianHelper {
 
         return new Point(averageX, averageY);
     }
+
+    /**
+     * Returns the cartesian coordinates of the provided isometric point
+     * @param point
+     */
+    public getCartesianToIsoCoordinate(point: Point): Point {
+        const tempPt = new Point();
+        tempPt.x += (Math.floor((point.x - point.y) / 2));
+        tempPt.y += (Math.floor((point.x + point.y) / 4));
+        return tempPt;
+    }
 }

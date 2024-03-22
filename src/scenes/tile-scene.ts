@@ -173,10 +173,10 @@ export class TileScene extends Phaser.Scene implements StateMachineInterface {
         this.cartesianPoints.forEach((inPoint) => {
             const point = this.cartesianHelper.getCartesianTilePosition(inPoint, this.TILE_SIZE);
             const frame = Phaser.Math.RND.pick(['object/ground_2.png', 'object/ground_1.png']);
-            const isoPoint = this.cartesianToIsometric(point);
+            const isoPoint = this.cartesianHelper.getCartesianToIsoCoordinate(point);
             this.groundLayer.add(this.make.image({
-                x: (isoPoint.x - this.ISO_TILE_WIDTH * 0.5),
-                y: (isoPoint.y - this.ISO_TILE_HEIGHT * 0.5),
+                x: this.isoGridGlobalCenter.x + (isoPoint.x - this.ISO_TILE_WIDTH * 0.5),
+                y: this.isoGridGlobalCenter.y + (isoPoint.y - this.ISO_TILE_HEIGHT * 0.5),
                 key: TileScene.GAME_ATLAS_KEY,
                 frame: frame
             }))
@@ -209,11 +209,11 @@ export class TileScene extends Phaser.Scene implements StateMachineInterface {
             this.collisionGroup.add(logicObject);
 
             // Create render representation
-            const isoPoint = this.cartesianToIsometric(point);
+            const isoPoint = this.cartesianHelper.getCartesianToIsoCoordinate(point);
             const renderObject = new IsoImage({
                 scene: this,
-                x: (isoPoint.x - 32),
-                y: (isoPoint.y - 32),
+                x: this.isoGridGlobalCenter.x + (isoPoint.x - 32),
+                y: this.isoGridGlobalCenter.y + (isoPoint.y - 32),
                 texture: TileScene.GAME_ATLAS_KEY,
                 frame: 'object/cornfield.png'
             }, index);
@@ -235,10 +235,10 @@ export class TileScene extends Phaser.Scene implements StateMachineInterface {
     private createVehicles() {
         const centerPoint = this.cartesianHelper.getCenterOfPoints(this.cartesianPoints);
         const cartPlayerPosition = this.cartesianHelper.getCartesianTilePosition(centerPoint, this.TILE_SIZE);
-        const renderPlayerPosition = this.cartesianToIsometric(cartPlayerPosition);
+        const renderPlayerPosition = this.cartesianHelper.getCartesianToIsoCoordinate(cartPlayerPosition);
 
-        const x = renderPlayerPosition.x;
-        const y = renderPlayerPosition.y - this.ISO_TILE_HEIGHT * 0.5;
+        const x = this.isoGridGlobalCenter.x + renderPlayerPosition.x;
+        const y = this.isoGridGlobalCenter.y + (renderPlayerPosition.y - this.ISO_TILE_HEIGHT * 0.5);
 
         this.availableVehicles = [new Tractor(this, x, y), new Harvester(this, x, y)];
 
@@ -383,11 +383,11 @@ export class TileScene extends Phaser.Scene implements StateMachineInterface {
         this.cartesianPoints.forEach((inPoint, i) => {
             const point = this.cartesianHelper.getCartesianTilePosition(inPoint, this.TILE_SIZE);
             // ground
-            const isoPoint = this.cartesianToIsometric(point);
+            const isoPoint = this.cartesianHelper.getCartesianToIsoCoordinate(point);
             const groundTile = this.groundLayer.getChildren()[i] as Phaser.GameObjects.Image;
-            // groundTile.x = (5 * 64) + isoPoint.x;
-            groundTile.x = isoPoint.x;
-            groundTile.y = isoPoint.y;
+
+            groundTile.x = this.isoGridGlobalCenter.x + isoPoint.x;
+            groundTile.y = this.isoGridGlobalCenter.y + isoPoint.y;
         });
 
         // Update objects
@@ -401,9 +401,9 @@ export class TileScene extends Phaser.Scene implements StateMachineInterface {
 
             const point = this.cartesianHelper.getCartesianTilePosition(this.cartesianPoints[isoImage.getCartesianPointIndex()], this.TILE_SIZE);
 
-            const isoPoint = this.cartesianToIsometric(point);
-            isoImage.x = isoPoint.x;
-            isoImage.y = isoPoint.y - this.ISO_TILE_HEIGHT * 0.5;
+            const isoPoint = this.cartesianHelper.getCartesianToIsoCoordinate(point);
+            isoImage.x = this.isoGridGlobalCenter.x + isoPoint.x;
+            isoImage.y = this.isoGridGlobalCenter.y + (isoPoint.y - this.ISO_TILE_HEIGHT * 0.5);
         });
     }
 
@@ -501,15 +501,6 @@ export class TileScene extends Phaser.Scene implements StateMachineInterface {
         this.renderPlayerVehicle = selectedVehicle;
         this.renderPlayerVehicle.visible = true;
     }
-
-
-    private cartesianToIsometric(cartPt: Point) {
-        const tempPt = new Point(this.isoGridGlobalCenter.x, this.isoGridGlobalCenter.y);
-        tempPt.x += (Math.floor((cartPt.x - cartPt.y) / 2));
-        tempPt.y += (Math.floor((cartPt.x + cartPt.y) / 4));
-        return tempPt;
-    }
-
 
     /* ---------------------------------------------------------------
     * GETTER & SETTER
