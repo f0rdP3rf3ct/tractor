@@ -48,10 +48,7 @@ export class EndGameUI extends Phaser.GameObjects.Container {
         this.add(this.hitSpaceToStart);
     }
 
-    protected createTweens() {
-
-        this.starMiddle.scaleX = this.starMiddle.scaleY = 0;
-
+    protected startMiddleStarTween() {
         this.scene.tweens.chain({
             targets: this.starMiddle,
             tweens: [
@@ -63,16 +60,59 @@ export class EndGameUI extends Phaser.GameObjects.Container {
                 },
                 {
                     scaleX: 1,
-                    scaleY: 1.2,
+                    scaleY: 1,
                     duration: 300,
                     ease: 'bounce.out'
                 },
             ],
-            loop: -1,
-            loopDelay: 300,
-            // onComplete: () => this.openChest(chest, key)
+            onComplete: () => this.startRightStarTween()
         });
+    }
 
+    protected startRightStarTween() {
+        this.scene.tweens.chain({
+            targets: this.starRight,
+            tweens: [
+                {
+                    scaleX: 1.2,
+                    scaleY: 1.2,
+                    duration: 300,
+                    ease: 'quad.out'
+                },
+                {
+                    scaleX: 1,
+                    scaleY: 1,
+                    duration: 300,
+                    ease: 'bounce.out'
+                },
+            ]
+        });
+    }
+
+    protected createTweens() {
+
+        this.starLeft.scaleX = this.starLeft.scaleY = 0;
+        this.starMiddle.scaleX = this.starMiddle.scaleY = 0;
+        this.starRight.scaleX = this.starRight.scaleY = 0;
+
+        this.scene.tweens.chain({
+            targets: this.starLeft,
+            tweens: [
+                {
+                    scaleX: 1.2,
+                    scaleY: 1.2,
+                    duration: 300,
+                    ease: 'quad.out'
+                },
+                {
+                    scaleX: 1,
+                    scaleY: 1,
+                    duration: 300,
+                    ease: 'bounce.out'
+                },
+            ],
+            onComplete: () => this.startMiddleStarTween()
+        });
 
         this.scene.tweens.add({
             targets: this.hitSpaceToStart,
