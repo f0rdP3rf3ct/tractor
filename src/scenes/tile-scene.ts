@@ -13,6 +13,7 @@ import {Harvester} from "../objects/Harvester";
 import {CartesianHelper} from "../misc/CartesianHelper";
 import {State, StateMachineInterface} from "../interfaces/stateMachine.interface";
 import {MenuState} from "../states/MenuState";
+import {GameOverState} from "../states/GameOverState";
 
 
 export class TileScene extends Phaser.Scene implements StateMachineInterface {
@@ -27,7 +28,7 @@ export class TileScene extends Phaser.Scene implements StateMachineInterface {
      */
     static GAME_ATLAS_KEY = 'gameAssets';
 
-    private TILEMAP_SIZE = 40;
+    private TILEMAP_SIZE = 10;
 
     private TILE_SIZE = 64;
 
@@ -69,6 +70,10 @@ export class TileScene extends Phaser.Scene implements StateMachineInterface {
     private renderObjectsLayer: Layer;
 
     private collisionGroup: Group;
+
+    private cropsCollected = 0;
+
+    private cropsInstances = 0;
 
 
     // Audio
@@ -218,6 +223,7 @@ export class TileScene extends Phaser.Scene implements StateMachineInterface {
                 frame: 'object/cornfield.png'
             }, index);
             this.renderObjectsLayer.add(renderObject);
+            this.cropsInstances++;
         });
 
     }
@@ -293,7 +299,15 @@ export class TileScene extends Phaser.Scene implements StateMachineInterface {
                 this.audioHarvesting.play();
                 const treatAsImage = displayObject[0] as Image;
                 this.particleEmitterCrops.emitParticleAt(treatAsImage.x, treatAsImage.y, 10);
+                this.cropsCollected++;
+                this.checkWinCondition();
             }
+        }
+    }
+
+    private checkWinCondition() {
+        if (this.cropsCollected === this.cropsInstances) {
+            this.changeState(new GameOverState(this));
         }
     }
 
