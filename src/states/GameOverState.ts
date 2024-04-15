@@ -1,8 +1,8 @@
 import {State, StateMachineInterface} from "../interfaces/stateMachine.interface";
-import {InGameUI} from "../objects/InGameUI";
-import {TileScene} from "../scenes/tile-scene";
 import {Controls} from "../misc/Controls";
 import {EndGameUI} from "../objects/EndGameUI";
+import {Scene} from "phaser";
+import {TileScene} from "../scenes/tile-scene";
 
 export class GameOverState implements State {
 
@@ -20,6 +20,7 @@ export class GameOverState implements State {
     enter(stateMachine: StateMachineInterface): void {
         this.endGameUI = new EndGameUI(this.scene, 400, 300);
         this.scene.add.existing(this.endGameUI);
+        this.addEventListeners();
     }
 
     exit(): void {
@@ -28,6 +29,17 @@ export class GameOverState implements State {
     }
 
     updateState(stateMachine: StateMachineInterface, delta: number): void {
+    }
+
+    private addEventListeners(): void {
+        this.controls.inputActionEvent.addListener(Controls.INPUT_ACTION_EVENT_KEY, (key: string) => {
+            switch (key) {
+                case Controls.INPUT_ACTION_EVENT_KEY_BUTTON_A:
+                    this.scene.shutDown();
+                    this.scene.scene.start('MenuScene');
+                    break;
+            }
+        })
     }
 
     private removeEventListeners(): void {

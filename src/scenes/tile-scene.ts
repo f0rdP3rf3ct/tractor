@@ -28,7 +28,7 @@ export class TileScene extends Phaser.Scene implements StateMachineInterface {
      */
     static GAME_ATLAS_KEY = 'gameAssets';
 
-    private TILEMAP_SIZE = 10;
+    private TILEMAP_SIZE = 40;
 
     private TILE_SIZE = 64;
 
@@ -82,6 +82,9 @@ export class TileScene extends Phaser.Scene implements StateMachineInterface {
     private audioHarvesting: HTML5AudioSound | WebAudioSound | NoAudioSound;
 
     private audioHonk: HTML5AudioSound | WebAudioSound | NoAudioSound;
+
+    private audioCoin: HTML5AudioSound | WebAudioSound | NoAudioSound;
+
 
     // Particles
     private particleEmitterCrops: ParticleEmitter;
@@ -144,6 +147,10 @@ export class TileScene extends Phaser.Scene implements StateMachineInterface {
         }
     }
 
+    public shutDown() {
+        this.sound.removeAll();
+    }
+
     /* ---------------------------------------------------------------
      * GAME CREATE METHODS
       ---------------------------------------------------------------*/
@@ -158,11 +165,14 @@ export class TileScene extends Phaser.Scene implements StateMachineInterface {
 
     private createAudio() {
         const backgroundTheme = this.sound.add('backgroundTheme', {loop: true});
-        backgroundTheme.play();
+        if (!backgroundTheme.isPlaying) {
+            backgroundTheme.play();
+        }
 
         this.audioEngine = this.sound.add('tractorEngine', {loop: true});
         this.audioHarvesting = this.sound.add('harvesting', {loop: false});
         this.audioHonk = this.sound.add('honk', {loop: false});
+        this.audioCoin = this.sound.add('win', {loop: false});
     }
 
     private createCartesianTilePoints() {
@@ -480,6 +490,12 @@ export class TileScene extends Phaser.Scene implements StateMachineInterface {
     public playAudioHonk(): void {
         if (!this.audioHonk.isPlaying) {
             this.audioHonk.play();
+        }
+    }
+
+    public playAudioCoin(): void {
+        if (!this.audioCoin.isPlaying) {
+            this.audioCoin.play();
         }
     }
 

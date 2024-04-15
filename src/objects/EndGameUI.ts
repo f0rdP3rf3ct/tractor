@@ -1,5 +1,6 @@
 import {Scene} from "phaser";
 import Image = Phaser.GameObjects.Image;
+import {TileScene} from "../scenes/tile-scene";
 
 export class EndGameUI extends Phaser.GameObjects.Container {
 
@@ -34,8 +35,6 @@ export class EndGameUI extends Phaser.GameObjects.Container {
 
         this.harvester = new Image(this.scene, -10, 40, EndGameUI.INGAME_UI_KEY, 'modal_harverster.png')
 
-        this.hitSpaceToStart = new Image(this.scene, 0, 160, EndGameUI.INGAME_UI_KEY, 'hit_space_to_start.png');
-
 
         this.add(image);
         this.add(modalTitle);
@@ -44,8 +43,11 @@ export class EndGameUI extends Phaser.GameObjects.Container {
         this.add(this.starMiddle);
         this.add(this.starRight);
         this.add(this.harvester);
+    }
 
-        this.add(this.hitSpaceToStart);
+    protected playCoinAudio() {
+        const scene = this.scene as TileScene;
+        scene.playAudioCoin();
     }
 
     protected startMiddleStarTween() {
@@ -55,13 +57,13 @@ export class EndGameUI extends Phaser.GameObjects.Container {
                 {
                     scaleX: 1.2,
                     scaleY: 1.2,
-                    duration: 300,
+                    duration: 200,
                     ease: 'quad.out'
                 },
                 {
                     scaleX: 1,
                     scaleY: 1,
-                    duration: 300,
+                    duration: 200,
                     ease: 'bounce.out'
                 },
             ],
@@ -76,13 +78,13 @@ export class EndGameUI extends Phaser.GameObjects.Container {
                 {
                     scaleX: 1.2,
                     scaleY: 1.2,
-                    duration: 300,
+                    duration: 200,
                     ease: 'quad.out'
                 },
                 {
                     scaleX: 1,
                     scaleY: 1,
-                    duration: 300,
+                    duration: 200,
                     ease: 'bounce.out'
                 },
             ]
@@ -101,16 +103,17 @@ export class EndGameUI extends Phaser.GameObjects.Container {
                 {
                     scaleX: 1.2,
                     scaleY: 1.2,
-                    duration: 300,
+                    duration: 200,
                     ease: 'quad.out'
                 },
                 {
                     scaleX: 1,
                     scaleY: 1,
-                    duration: 300,
+                    duration: 200,
                     ease: 'bounce.out'
                 },
             ],
+            onActive: () => this.playCoinAudio(),
             onComplete: () => this.startMiddleStarTween()
         });
 
