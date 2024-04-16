@@ -1,6 +1,7 @@
 const path = require('path');
 const CopyPlugin = require("copy-webpack-plugin");
 const HtmlWebpackPlugin = require('html-webpack-plugin');
+const ZipPlugin = require('zip-webpack-plugin');
 
 module.exports = {
     entry: './src/game.ts',
@@ -47,6 +48,11 @@ module.exports = {
                 ]
             }
         ),
+        new ZipPlugin({
+            path: path.resolve(__dirname, 'dist'),
+            filename: 'game.zip',
+
+        })
     ],
     resolve: {
         extensions: ['.ts', '.js']

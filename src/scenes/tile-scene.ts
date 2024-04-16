@@ -13,6 +13,7 @@ import {Harvester} from "../objects/Harvester";
 import {CartesianHelper} from "../misc/CartesianHelper";
 import {State, StateMachineInterface} from "../interfaces/stateMachine.interface";
 import {MenuState} from "../states/MenuState";
+import {GameOverState} from "../states/GameOverState";
 
 
 export class TileScene extends Phaser.Scene implements StateMachineInterface {
@@ -70,6 +71,10 @@ export class TileScene extends Phaser.Scene implements StateMachineInterface {
 
     private collisionGroup: Group;
 
+    private cropsCollected = 0;
+
+    private cropsInstances = 0;
+
 
     // Audio
     private audioEngine: HTML5AudioSound | WebAudioSound | NoAudioSound;
@@ -77,6 +82,9 @@ export class TileScene extends Phaser.Scene implements StateMachineInterface {
     private audioHarvesting: HTML5AudioSound | WebAudioSound | NoAudioSound;
 
     private audioHonk: HTML5AudioSound | WebAudioSound | NoAudioSound;
+
+    private audioCoin: HTML5AudioSound | WebAudioSound | NoAudioSound;
+
 
     // Particles
     private particleEmitterCrops: ParticleEmitter;
@@ -139,6 +147,10 @@ export class TileScene extends Phaser.Scene implements StateMachineInterface {
         }
     }
 
+    public shutDown() {
+        this.sound.removeAll();
+    }
+
     /* ---------------------------------------------------------------
      * GAME CREATE METHODS
       ---------------------------------------------------------------*/
@@ -153,11 +165,14 @@ export class TileScene extends Phaser.Scene implements StateMachineInterface {
 
     private createAudio() {
         const backgroundTheme = this.sound.add('backgroundTheme', {loop: true});
-        backgroundTheme.play();
+        if (!backgroundTheme.isPlaying) {
+            backgroundTheme.play();
+        }
 
         this.audioEngine = this.sound.add('tractorEngine', {loop: true});
         this.audioHarvesting = this.sound.add('harvesting', {loop: false});
         this.audioHonk = this.sound.add('honk', {loop: false});
+        this.audioCoin = this.sound.add('win', {loop: false});
     }
 
     private createCartesianTilePoints() {
@@ -173,10 +188,10 @@ export class TileScene extends Phaser.Scene implements StateMachineInterface {
         this.cartesianPoints.forEach((inPoint) => {
             const point = this.cartesianHelper.getCartesianTilePosition(inPoint, this.TILE_SIZE);
             const frame = Phaser.Math.RND.pick(['object/ground_2.png', 'object/ground_1.png']);
-            const isoPoint = this.cartesianToIsometric(point);
+            const isoPoint = this.cartesianHelper.getCartesianToIsoCoordinate(point);
             this.groundLayer.add(this.make.image({
-                x: (isoPoint.x - this.ISO_TILE_WIDTH * 0.5),
-                y: (isoPoint.y - this.ISO_TILE_HEIGHT * 0.5),
+                x: this.isoGridGlobalCenter.x + (isoPoint.x - this.ISO_TILE_WIDTH * 0.5),
+                y: this.isoGridGlobalCenter.y + (isoPoint.y - this.ISO_TILE_HEIGHT * 0.5),
                 key: TileScene.GAME_ATLAS_KEY,
                 frame: frame
             }))
@@ -209,15 +224,16 @@ export class TileScene extends Phaser.Scene implements StateMachineInterface {
             this.collisionGroup.add(logicObject);
 
             // Create render representation
-            const isoPoint = this.cartesianToIsometric(point);
+            const isoPoint = this.cartesianHelper.getCartesianToIsoCoordinate(point);
             const renderObject = new IsoImage({
                 scene: this,
-                x: (isoPoint.x - 32),
-                y: (isoPoint.y - 32),
+                x: this.isoGridGlobalCenter.x + (isoPoint.x - 32),
+                y: this.isoGridGlobalCenter.y + (isoPoint.y - 32),
                 texture: TileScene.GAME_ATLAS_KEY,
                 frame: 'object/cornfield.png'
             }, index);
             this.renderObjectsLayer.add(renderObject);
+            this.cropsInstances++;
         });
 
     }
@@ -235,10 +251,10 @@ export class TileScene extends Phaser.Scene implements StateMachineInterface {
     private createVehicles() {
         const centerPoint = this.cartesianHelper.getCenterOfPoints(this.cartesianPoints);
         const cartPlayerPosition = this.cartesianHelper.getCartesianTilePosition(centerPoint, this.TILE_SIZE);
-        const renderPlayerPosition = this.cartesianToIsometric(cartPlayerPosition);
+        const renderPlayerPosition = this.cartesianHelper.getCartesianToIsoCoordinate(cartPlayerPosition);
 
-        const x = renderPlayerPosition.x;
-        const y = renderPlayerPosition.y - this.ISO_TILE_HEIGHT * 0.5;
+        const x = this.isoGridGlobalCenter.x + renderPlayerPosition.x;
+        const y = this.isoGridGlobalCenter.y + (renderPlayerPosition.y - this.ISO_TILE_HEIGHT * 0.5);
 
         this.availableVehicles = [new Tractor(this, x, y), new Harvester(this, x, y)];
 
@@ -293,7 +309,15 @@ export class TileScene extends Phaser.Scene implements StateMachineInterface {
                 this.audioHarvesting.play();
                 const treatAsImage = displayObject[0] as Image;
                 this.particleEmitterCrops.emitParticleAt(treatAsImage.x, treatAsImage.y, 10);
+                this.cropsCollected++;
+                this.checkWinCondition();
             }
+        }
+    }
+
+    private checkWinCondition() {
+        if (this.cropsCollected === this.cropsInstances) {
+            this.changeState(new GameOverState(this));
         }
     }
 
@@ -383,11 +407,11 @@ export class TileScene extends Phaser.Scene implements StateMachineInterface {
         this.cartesianPoints.forEach((inPoint, i) => {
             const point = this.cartesianHelper.getCartesianTilePosition(inPoint, this.TILE_SIZE);
             // ground
-            const isoPoint = this.cartesianToIsometric(point);
+            const isoPoint = this.cartesianHelper.getCartesianToIsoCoordinate(point);
             const groundTile = this.groundLayer.getChildren()[i] as Phaser.GameObjects.Image;
-            // groundTile.x = (5 * 64) + isoPoint.x;
-            groundTile.x = isoPoint.x;
-            groundTile.y = isoPoint.y;
+
+            groundTile.x = this.isoGridGlobalCenter.x + isoPoint.x;
+            groundTile.y = this.isoGridGlobalCenter.y + isoPoint.y;
         });
 
         // Update objects
@@ -401,9 +425,9 @@ export class TileScene extends Phaser.Scene implements StateMachineInterface {
 
             const point = this.cartesianHelper.getCartesianTilePosition(this.cartesianPoints[isoImage.getCartesianPointIndex()], this.TILE_SIZE);
 
-            const isoPoint = this.cartesianToIsometric(point);
-            isoImage.x = isoPoint.x;
-            isoImage.y = isoPoint.y - this.ISO_TILE_HEIGHT * 0.5;
+            const isoPoint = this.cartesianHelper.getCartesianToIsoCoordinate(point);
+            isoImage.x = this.isoGridGlobalCenter.x + isoPoint.x;
+            isoImage.y = this.isoGridGlobalCenter.y + (isoPoint.y - this.ISO_TILE_HEIGHT * 0.5);
         });
     }
 
@@ -469,6 +493,12 @@ export class TileScene extends Phaser.Scene implements StateMachineInterface {
         }
     }
 
+    public playAudioCoin(): void {
+        if (!this.audioCoin.isPlaying) {
+            this.audioCoin.play();
+        }
+    }
+
     /**
      * @private
      * @param dir
@@ -501,15 +531,6 @@ export class TileScene extends Phaser.Scene implements StateMachineInterface {
         this.renderPlayerVehicle = selectedVehicle;
         this.renderPlayerVehicle.visible = true;
     }
-
-
-    private cartesianToIsometric(cartPt: Point) {
-        const tempPt = new Point(this.isoGridGlobalCenter.x, this.isoGridGlobalCenter.y);
-        tempPt.x += (Math.floor((cartPt.x - cartPt.y) / 2));
-        tempPt.y += (Math.floor((cartPt.x + cartPt.y) / 4));
-        return tempPt;
-    }
-
 
     /* ---------------------------------------------------------------
     * GETTER & SETTER

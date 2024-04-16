@@ -18,7 +18,7 @@
 },
 {
 	"filename": "3.png",
-	"frame": {"x":362,"y":660,"w":113,"h":150},
+	"frame": {"x":362,"y":685,"w":113,"h":150},
 	"rotated": false,
 	"trimmed": true,
 	"spriteSourceSize": {"x":42,"y":38,"w":113,"h":150},
@@ -34,7 +34,7 @@
 },
 {
 	"filename": "hit_space_to_start.png",
-	"frame": {"x":124,"y":804,"w":145,"h":18},
+	"frame": {"x":232,"y":887,"w":145,"h":18},
 	"rotated": false,
 	"trimmed": true,
 	"spriteSourceSize": {"x":2,"y":2,"w":145,"h":18},
@@ -50,7 +50,7 @@
 },
 {
 	"filename": "keyboard_title.png",
-	"frame": {"x":1,"y":804,"w":121,"h":23},
+	"frame": {"x":362,"y":660,"w":121,"h":23},
 	"rotated": false,
 	"trimmed": true,
 	"spriteSourceSize": {"x":2,"y":0,"w":121,"h":23},
@@ -65,20 +65,76 @@
 	"sourceSize": {"w":508,"h":426}
 },
 {
+	"filename": "modal_harverster.png",
+	"frame": {"x":1,"y":837,"w":143,"h":112},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":143,"h":112},
+	"sourceSize": {"w":143,"h":112}
+},
+{
+	"filename": "modal_star_left.png",
+	"frame": {"x":1,"y":767,"w":64,"h":67},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":64,"h":67},
+	"sourceSize": {"w":64,"h":67}
+},
+{
+	"filename": "modal_star_middle.png",
+	"frame": {"x":146,"y":837,"w":84,"h":81},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":84,"h":81},
+	"sourceSize": {"w":84,"h":81}
+},
+{
+	"filename": "modal_star_right.png",
+	"frame": {"x":67,"y":767,"w":66,"h":65},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":66,"h":65},
+	"sourceSize": {"w":66,"h":65}
+},
+{
 	"filename": "modal_title_controls.png",
-	"frame": {"x":1,"y":767,"w":272,"h":35},
+	"frame": {"x":146,"y":920,"w":272,"h":35},
 	"rotated": false,
 	"trimmed": true,
 	"spriteSourceSize": {"x":0,"y":1,"w":272,"h":35},
 	"sourceSize": {"w":272,"h":36}
+},
+{
+	"filename": "modal_title_exit.png",
+	"frame": {"x":135,"y":800,"w":81,"h":29},
+	"rotated": false,
+	"trimmed": true,
+	"spriteSourceSize": {"x":0,"y":4,"w":81,"h":29},
+	"sourceSize": {"w":81,"h":34}
+},
+{
+	"filename": "modal_title_play_again.png",
+	"frame": {"x":146,"y":767,"w":191,"h":31},
+	"rotated": false,
+	"trimmed": true,
+	"spriteSourceSize": {"x":0,"y":3,"w":191,"h":31},
+	"sourceSize": {"w":191,"h":34}
+},
+{
+	"filename": "modal_title_victory.png",
+	"frame": {"x":232,"y":837,"w":240,"h":48},
+	"rotated": false,
+	"trimmed": true,
+	"spriteSourceSize": {"x":0,"y":6,"w":240,"h":48},
+	"sourceSize": {"w":240,"h":56}
 }],
 "meta": {
 	"app": "http://www.codeandweb.com/texturepacker",
 	"version": "1.0",
 	"image": "uiIngame.png",
 	"format": "RGBA8888",
-	"size": {"w":488,"h":828},
+	"size": {"w":488,"h":956},
 	"scale": "0.5",
-	"smartupdate": "$TexturePacker:SmartUpdate:5dd2ce2c2687e9683d52ea009ff2718f:7120b1f16b85455b6acc28119a899901:5b1ddbf19cc5ca3c3ec5ad976b99df27$"
+	"smartupdate": "$TexturePacker:SmartUpdate:213b0a4a448dd70ba98f5e665fa2c898:cf5dba32289f0c23bcfb23646bd10c53:5b1ddbf19cc5ca3c3ec5ad976b99df27$"
 }
 }

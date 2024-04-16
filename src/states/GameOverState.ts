@@ -1,18 +1,16 @@
 import {State, StateMachineInterface} from "../interfaces/stateMachine.interface";
-import {TileScene} from "../scenes/tile-scene";
 import {Controls} from "../misc/Controls";
-import {PlayState} from "./PlayState";
-import {InGameUI} from "../objects/InGameUI";
-import Point = Phaser.Geom.Point;
-import {CountDownState} from "./CountDownState";
+import {EndGameUI} from "../objects/EndGameUI";
+import {Scene} from "phaser";
+import {TileScene} from "../scenes/tile-scene";
 
-export class MenuState implements State {
+export class GameOverState implements State {
 
     private scene: TileScene;
 
     private controls: Controls;
 
-    private inGameUI: InGameUI;
+    private endGameUI: EndGameUI;
 
     constructor(scene: TileScene) {
         this.scene = scene;
@@ -20,27 +18,25 @@ export class MenuState implements State {
     }
 
     enter(stateMachine: StateMachineInterface): void {
-        this.scene.setMoveDir(new Point(0, 0));
+        this.endGameUI = new EndGameUI(this.scene, 400, 300);
+        this.scene.add.existing(this.endGameUI);
         this.addEventListeners();
-
-        this.inGameUI = new InGameUI(this.scene, 400, 300);
-        this.scene.add.existing(this.inGameUI);
     }
 
     exit(): void {
         this.removeEventListeners();
-        this.inGameUI.destroy();
+        this.endGameUI.destroy();
     }
 
-    updateState(stateMachine: StateMachineInterface): void {
-        this.updateInput();
+    updateState(stateMachine: StateMachineInterface, delta: number): void {
     }
 
     private addEventListeners(): void {
         this.controls.inputActionEvent.addListener(Controls.INPUT_ACTION_EVENT_KEY, (key: string) => {
             switch (key) {
                 case Controls.INPUT_ACTION_EVENT_KEY_BUTTON_A:
-                    this.scene.changeState(new CountDownState(this.scene));
+                    this.scene.shutDown();
+                    this.scene.scene.start('MenuScene');
                     break;
             }
         })
@@ -49,9 +45,4 @@ export class MenuState implements State {
     private removeEventListeners(): void {
         this.controls.inputActionEvent.removeListener(Controls.INPUT_ACTION_EVENT_KEY);
     }
-
-    private updateInput() {
-
-    }
-
 }
