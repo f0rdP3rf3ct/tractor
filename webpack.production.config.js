@@ -45,7 +45,7 @@ module.exports = {
         new CopyPlugin({
                 patterns: [
                     {from: 'assets/**/*', to: '', globOptions: {ignore: ['**/less/**']}},
-                    {from: 'manifest.json', to: ''}, // PWA
+                    {from: 'src/manifest.json', to: ''}, // PWA
                     {from: 'src/sw.js', to: ''} // PWA
                 ]
             }
