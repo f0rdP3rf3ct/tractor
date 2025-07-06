@@ -19,8 +19,8 @@ export class MenuScene extends Phaser.Scene {
     private currentSelectionIndex = 0;
 
     private selections = [
-        {key: 'newGame', coord: new Point(292, 302), selected: true},
-        {key: 'controls', coord: new Point(292, 350), selected: false}
+        {key: 'newGame', coord: new Point(292, 310), selected: true},
+        {key: 'controls', coord: new Point(292, 360), selected: false}
     ];
 
     constructor() {
@@ -45,10 +45,10 @@ export class MenuScene extends Phaser.Scene {
 
         this.add.image(0, 0, LoadingScene.UI_ATLAS_KEY, 'background.png').setOrigin(0, 0);
         this.logo = this.add.image(width * 0.5, 160, LoadingScene.UI_ATLAS_KEY, 'Logo.png');
-        this.buttonNewGameImage = this.add.image(width * 0.5, 302, LoadingScene.UI_ATLAS_KEY, 'new_game.png');
-        this.buttonControlsImage = this.add.image(width * 0.5, 350, LoadingScene.UI_ATLAS_KEY, 'controls.png');
+        this.buttonNewGameImage = this.add.image(width * 0.5, 320, LoadingScene.UI_ATLAS_KEY, 'new_game.png');
+        this.buttonControlsImage = this.add.image(width * 0.5, 370, LoadingScene.UI_ATLAS_KEY, 'controls.png');
 
-        this.selectionArrowImage = this.add.image(292, 302, LoadingScene.UI_ATLAS_KEY, 'selection_arrow.png');
+        this.selectionArrowImage = this.add.image(292, 305, LoadingScene.UI_ATLAS_KEY, 'selection_arrow.png');
 
         this.tweens.add({
             targets: this.logo,

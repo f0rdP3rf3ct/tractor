@@ -7,14 +7,25 @@ import NoAudioSound = Phaser.Sound.NoAudioSound;
 import WebAudioSound = Phaser.Sound.WebAudioSound;
 import ParticleEmitter = Phaser.GameObjects.Particles.ParticleEmitter;
 import {IsoImage} from "../objects/isoImage";
-import {Controls} from "../misc/Controls";
 import {Tractor} from "../objects/Tractor";
 import {Vehicle} from "../objects/base/Vehicle";
 import {Harvester} from "../objects/Harvester";
 import {CartesianHelper} from "../misc/CartesianHelper";
+import {State, StateMachineInterface} from "../interfaces/stateMachine.interface";
+import {MenuState} from "../states/MenuState";
+import {GameOverState} from "../states/GameOverState";
 
-export class TileScene extends Phaser.Scene {
 
+export class TileScene extends Phaser.Scene implements StateMachineInterface {
+
+    /**
+     * Game State
+     */
+    private currentGameState: State;
+
+    /**
+     * Constants
+     */
     static GAME_ATLAS_KEY = 'gameAssets';
 
     private TILEMAP_SIZE = 40;
@@ -29,6 +40,9 @@ export class TileScene extends Phaser.Scene {
 
     private MOVE_SPEED = 0.2;
 
+    /**
+     * Variables
+     */
     private availableVehicles: Vehicle[] = [];
 
     private selectedPlayerModelIndex = 1;
@@ -39,13 +53,11 @@ export class TileScene extends Phaser.Scene {
 
     private lastDirection: string = 'right';
 
-    /**
-     * Point to position isogrid in the center of the screen
-     * @private
-     */
-    private isoGridGlobalCenter: Point;
+    private playerFacingDir = 1;
 
-    private moveDir = {x: 0, y: 0};
+    private moveDir: Point = new Point(0, 0);
+
+    private isoGridGlobalCenter: Point;
 
     private cartesianPoints: Point[] = [];
 
@@ -59,7 +71,10 @@ export class TileScene extends Phaser.Scene {
 
     private collisionGroup: Group;
 
-    private playerFacingDir = 1;
+    private cropsCollected = 0;
+
+    private cropsInstances = 0;
+
 
     // Audio
     private audioEngine: HTML5AudioSound | WebAudioSound | NoAudioSound;
@@ -68,10 +83,11 @@ export class TileScene extends Phaser.Scene {
 
     private audioHonk: HTML5AudioSound | WebAudioSound | NoAudioSound;
 
+    private audioCoin: HTML5AudioSound | WebAudioSound | NoAudioSound;
+
+
     // Particles
     private particleEmitterCrops: ParticleEmitter;
-
-    private controls: Controls;
 
     private cartesianHelper: CartesianHelper;
 
@@ -79,57 +95,207 @@ export class TileScene extends Phaser.Scene {
         super({key: 'TileScene'});
     }
 
+    changeState(newState: State): void {
+        if (this.currentGameState) {
+            this.currentGameState.exit();
+        }
+
+        this.currentGameState = newState;
+
+        if (this.currentGameState) {
+            this.currentGameState.enter(this);
+        }
+    }
+
+    getCurrentState(): State {
+        throw new Error("Method not implemented.");
+    }
+
+    updateStateMachine(): void {
+        throw new Error("Method not implemented.");
+    }
+
     preload(): void {
         // debug
-        this.load.image('cartDebugObject', '../assets/cartDebugObject.png');
-        this.load.image('cartDebugPlayer', '../assets/cartDebugPlayer.png');
+        this.load.image('cartDebugObject', './assets/cartDebugObject.png');
+        this.load.image('cartDebugPlayer', './assets/cartDebugPlayer.png');
     }
 
     create(): void {
-        this.controls = new Controls(this);
-        this.cartesianHelper = new CartesianHelper();
-
-        this.collisionGroup = this.physics.add.group();
-
-        this.isoGridWidth = this.TILEMAP_SIZE * this.ISO_TILE_WIDTH;
-        this.isoGridHeight = this.TILEMAP_SIZE * this.ISO_TILE_HEIGHT;
-
-        this.isoGridGlobalCenter = new Point((this.cameras.main.width * 0.5), (this.cameras.main.height * 0.5) - (this.isoGridHeight * 0.5));
-
+        this.createMembers();
         this.createAudio();
 
         this.createCartesianTilePoints();
         this.updateCartesianTilePoints();
 
         this.createLayers();
-        this.addGroundTiles();
-        this.addObjectTiles();
+        this.createGroundTiles();
+        this.createObjectTiles();
 
-        this.addPhysicsPlayer();
+        this.createPhysicsPlayer();
         this.createVehicles();
 
-        this.addParticles();
-        this.addEventListeners();
+        this.createParticles();
+        this.createPhysics();
 
-        this.physics.add.overlap(this.logicPlayer, this.collisionGroup, this.handlePlayerCollision, null, this);
+        this.changeState(new MenuState(this))
+    }
+
+    update(time: number, delta: number) {
+        if (this.currentGameState) {
+            this.currentGameState.updateState(this, delta);
+        }
+    }
+
+    public shutDown() {
+        this.sound.removeAll();
+    }
+
+    /* ---------------------------------------------------------------
+     * GAME CREATE METHODS
+      ---------------------------------------------------------------*/
+
+    private createMembers() {
+        this.cartesianHelper = new CartesianHelper();
+        this.collisionGroup = this.physics.add.group();
+        this.isoGridWidth = this.TILEMAP_SIZE * this.ISO_TILE_WIDTH;
+        this.isoGridHeight = this.TILEMAP_SIZE * this.ISO_TILE_HEIGHT;
+        this.isoGridGlobalCenter = new Point((this.cameras.main.width * 0.5), (this.cameras.main.height * 0.5) - (this.isoGridHeight * 0.5));
     }
 
     private createAudio() {
         const backgroundTheme = this.sound.add('backgroundTheme', {loop: true});
-        backgroundTheme.play();
+        if (!backgroundTheme.isPlaying) {
+            backgroundTheme.play();
+        }
 
         this.audioEngine = this.sound.add('tractorEngine', {loop: true});
         this.audioHarvesting = this.sound.add('harvesting', {loop: false});
         this.audioHonk = this.sound.add('honk', {loop: false});
+        this.audioCoin = this.sound.add('win', {loop: false});
     }
 
-    private handlePlayerCollision(player: any, object: any) {
+    private createCartesianTilePoints() {
+        this.cartesianPoints = this.cartesianHelper.createCartesianPoints(this.TILEMAP_SIZE);
+    }
+
+    private createLayers() {
+        this.groundLayer = this.add.layer();
+        this.renderObjectsLayer = this.add.layer();
+    }
+
+    private createGroundTiles() {
+        this.cartesianPoints.forEach((inPoint) => {
+            const point = this.cartesianHelper.getCartesianTilePosition(inPoint, this.TILE_SIZE);
+            const frame = Phaser.Math.RND.pick(['object/ground_2.png', 'object/ground_1.png']);
+            const isoPoint = this.cartesianHelper.getCartesianToIsoCoordinate(point);
+            this.groundLayer.add(this.make.image({
+                x: this.isoGridGlobalCenter.x + (isoPoint.x - this.ISO_TILE_WIDTH * 0.5),
+                y: this.isoGridGlobalCenter.y + (isoPoint.y - this.ISO_TILE_HEIGHT * 0.5),
+                key: TileScene.GAME_ATLAS_KEY,
+                frame: frame
+            }))
+        });
+    }
+
+    private createObjectTiles() {
+
+        const innerMostPoints = this.cartesianHelper.getInnerMostCartesianPoints(this.TILEMAP_SIZE, this.INNER_MOST_BLANKS_TILE_SIZE);
+
+        this.cartesianPoints.forEach((inPoint, index) => {
+
+            const isInnerMost = innerMostPoints.some((innerPoint) => {
+                return innerPoint.x === inPoint.x && innerPoint.y === inPoint.y;
+            });
+
+            if (isInnerMost) {
+                return;
+            }
+
+            // Create logic representation
+            const point = this.cartesianHelper.getCartesianTilePosition(this.cartesianPoints[index], this.TILE_SIZE);
+            const logicObject = this.physics.add.image(point.x, point.y, 'cartDebugObject');
+            logicObject.setDataEnabled();
+            logicObject.data.set('cartesianIndex', index);
+
+            const body = logicObject.body as Phaser.Physics.Arcade.Body;
+            body.setSize(64, 64);
+            logicObject.alpha = 0;
+            this.collisionGroup.add(logicObject);
+
+            // Create render representation
+            const isoPoint = this.cartesianHelper.getCartesianToIsoCoordinate(point);
+            const renderObject = new IsoImage({
+                scene: this,
+                x: this.isoGridGlobalCenter.x + (isoPoint.x - 32),
+                y: this.isoGridGlobalCenter.y + (isoPoint.y - 32),
+                texture: TileScene.GAME_ATLAS_KEY,
+                frame: 'object/cornfield.png'
+            }, index);
+            this.renderObjectsLayer.add(renderObject);
+            this.cropsInstances++;
+        });
+
+    }
+
+    private createPhysicsPlayer() {
+        const centerPoint = this.cartesianHelper.getCenterOfPoints(this.cartesianPoints);
+        const cartPlayerPosition = this.cartesianHelper.getCartesianTilePosition(centerPoint, this.TILE_SIZE);
+
+        this.logicPlayer = this.physics.add.image(cartPlayerPosition.x, cartPlayerPosition.y, 'cartDebugPlayer');
+        this.logicPlayer.alpha = 0.2;
+
+        this.physics.add.existing(this.logicPlayer);
+    }
+
+    private createVehicles() {
+        const centerPoint = this.cartesianHelper.getCenterOfPoints(this.cartesianPoints);
+        const cartPlayerPosition = this.cartesianHelper.getCartesianTilePosition(centerPoint, this.TILE_SIZE);
+        const renderPlayerPosition = this.cartesianHelper.getCartesianToIsoCoordinate(cartPlayerPosition);
+
+        const x = this.isoGridGlobalCenter.x + renderPlayerPosition.x;
+        const y = this.isoGridGlobalCenter.y + (renderPlayerPosition.y - this.ISO_TILE_HEIGHT * 0.5);
+
+        this.availableVehicles = [new Tractor(this, x, y), new Harvester(this, x, y)];
+
+        this.availableVehicles.forEach((vehicle) => {
+            this.add.existing(vehicle);
+            this.renderObjectsLayer.add(vehicle);
+        });
+
+        this.cyclePlayerVehicle(0);
+    }
+
+    private createParticles() {
+        // add particle emitter
+        this.particleEmitterCrops = this.add.particles(0, 0, 'gameAssets', {
+            frame: 'object/cropParticle.png',
+            lifespan: 500,
+            speed: {min: 50, max: 100},
+            scale: {start: 0.1, end: 1},
+            rotate: {start: 0, end: 180},
+            alpha: {start: 1, end: 0},
+            gravityY: 4,
+            emitting: false
+        });
+    }
+
+    private createPhysics() {
+        this.physics.add.overlap(this.logicPlayer, this.collisionGroup, this.onPlayerCollision, null, this);
+    }
+
+    /* ---------------------------------------------------------------
+    * EVENTS
+     ---------------------------------------------------------------*/
+
+    private onPlayerCollision(player: any, object: any) {
 
         const index = object.data.get('cartesianIndex');
 
         if (object) {
             object.destroy();
 
+            // determine with which child collision occurred...
             const displayObject = this.renderObjectsLayer.getChildren().filter((child: IsoImage) => {
                 if (child.name === 'player') {
                     return false;
@@ -143,38 +309,23 @@ export class TileScene extends Phaser.Scene {
                 this.audioHarvesting.play();
                 const treatAsImage = displayObject[0] as Image;
                 this.particleEmitterCrops.emitParticleAt(treatAsImage.x, treatAsImage.y, 10);
+                this.cropsCollected++;
+                this.checkWinCondition();
             }
         }
     }
 
-    private createCartesianTilePoints() {
-        this.cartesianPoints = this.cartesianHelper.createCartesianPoints(this.TILEMAP_SIZE);
+    private checkWinCondition() {
+        if (this.cropsCollected === this.cropsInstances) {
+            this.changeState(new GameOverState(this));
+        }
     }
 
-    private createVehicles() {
-        const centerPoint = this.cartesianHelper.getCenterOfPoints(this.cartesianPoints);
-        const cartPlayerPosition = this.cartesianHelper.getCartesianTilePosition(centerPoint, this.TILE_SIZE);
-        const renderPlayerPosition = this.cartesianToIsometric(cartPlayerPosition);
+    /* ---------------------------------------------------------------
+    | UPDATE METHODS
+     ---------------------------------------------------------------*/
 
-        const x = renderPlayerPosition.x;
-        const y = renderPlayerPosition.y - this.ISO_TILE_HEIGHT * 0.5;
-
-        this.availableVehicles = [new Tractor(this, x, y), new Harvester(this, x, y)];
-
-        this.availableVehicles.forEach((vehicle) => {
-            this.add.existing(vehicle);
-            this.renderObjectsLayer.add(vehicle);
-        });
-
-        this.cyclePlayerVehicle(0);
-    }
-
-    private createLayers() {
-        this.groundLayer = this.add.layer();
-        this.renderObjectsLayer = this.add.layer();
-    }
-
-    private updateCartesianTilePoints() {
+    public updateCartesianTilePoints() {
 
         this.cartesianPoints.forEach((inPoint) => {
             const point = inPoint;
@@ -215,7 +366,7 @@ export class TileScene extends Phaser.Scene {
         });
     }
 
-    private updateLogic() {
+    public updateLogic() {
         this.collisionGroup.getChildren().forEach((object) => {
             const cartTilePosition = this.cartesianHelper.getCartesianTilePosition(this.cartesianPoints[object.data.get('cartesianIndex')], this.TILE_SIZE);
             const body = object.body as Phaser.Physics.Arcade.Body;
@@ -224,7 +375,7 @@ export class TileScene extends Phaser.Scene {
         });
     }
 
-    private updateAudio() {
+    public updateAudio() {
         if (this.moveDir.x === 0 && this.moveDir.y === 0) {
             this.audioEngine.setVolume(0.3);
             this.audioEngine.applyConfig();
@@ -238,106 +389,121 @@ export class TileScene extends Phaser.Scene {
         }
     }
 
-    private addGroundTiles() {
-        this.cartesianPoints.forEach((inPoint) => {
-            const point = this.cartesianHelper.getCartesianTilePosition(inPoint, this.TILE_SIZE);
-            const frame = Phaser.Math.RND.pick(['object/ground_2.png', 'object/ground_1.png']);
-            const isoPoint = this.cartesianToIsometric(point);
-            this.groundLayer.add(this.make.image({
-                x: (isoPoint.x - this.ISO_TILE_WIDTH * 0.5),
-                y: (isoPoint.y - this.ISO_TILE_HEIGHT * 0.5),
-                key: TileScene.GAME_ATLAS_KEY,
-                frame: frame
-            }))
+    public updateDepthSortIsometrics() {
+        this.renderObjectsLayer.sort('y', function (a: any, b: any) {
+            if (a.y < b.y) {
+                return -1;
+            }
+            if (a.y > b.y) {
+                return 1;
+            }
+            return 0;
         });
-    }
 
-    private addObjectTiles() {
+    };
 
-        const innerMostPoints = this.cartesianHelper.getInnerMostCartesianPoints(this.TILEMAP_SIZE, this.INNER_MOST_BLANKS_TILE_SIZE);
+    public updateRenderIsometric(delta: number) {
+        // this.graphics.clear();
+        this.cartesianPoints.forEach((inPoint, i) => {
+            const point = this.cartesianHelper.getCartesianTilePosition(inPoint, this.TILE_SIZE);
+            // ground
+            const isoPoint = this.cartesianHelper.getCartesianToIsoCoordinate(point);
+            const groundTile = this.groundLayer.getChildren()[i] as Phaser.GameObjects.Image;
 
-        this.cartesianPoints.forEach((inPoint, index) => {
+            groundTile.x = this.isoGridGlobalCenter.x + isoPoint.x;
+            groundTile.y = this.isoGridGlobalCenter.y + isoPoint.y;
+        });
 
-            const isInnerMost = innerMostPoints.some((innerPoint) => {
-                return innerPoint.x === inPoint.x && innerPoint.y === inPoint.y;
-            });
+        // Update objects
+        this.renderObjectsLayer.getChildren().forEach((object) => {
+            const isoImage = object as IsoImage;
 
-            if (isInnerMost) {
+            // do not apply coordinates to the player
+            if (isoImage.name === 'player') {
                 return;
             }
 
-            // Create logic representation
-            const point = this.cartesianHelper.getCartesianTilePosition(this.cartesianPoints[index], this.TILE_SIZE);
-            const logicObject = this.physics.add.image(point.x, point.y, 'cartDebugObject');
-            logicObject.setDataEnabled();
-            logicObject.data.set('cartesianIndex', index);
+            const point = this.cartesianHelper.getCartesianTilePosition(this.cartesianPoints[isoImage.getCartesianPointIndex()], this.TILE_SIZE);
 
-            const body = logicObject.body as Phaser.Physics.Arcade.Body;
-            body.setSize(64, 64);
-            logicObject.alpha = 0;
-            this.collisionGroup.add(logicObject);
-
-            // Create render representation
-            const isoPoint = this.cartesianToIsometric(point);
-            const renderObject = new IsoImage({
-                scene: this,
-                x: (isoPoint.x - 32),
-                y: (isoPoint.y - 32),
-                texture: TileScene.GAME_ATLAS_KEY,
-                frame: 'object/cornfield.png'
-            }, index);
-            this.renderObjectsLayer.add(renderObject);
-        });
-
-    }
-
-    private addPhysicsPlayer() {
-        const centerPoint = this.cartesianHelper.getCenterOfPoints(this.cartesianPoints);
-        const cartPlayerPosition = this.cartesianHelper.getCartesianTilePosition(centerPoint, this.TILE_SIZE);
-
-        this.logicPlayer = this.physics.add.image(cartPlayerPosition.x, cartPlayerPosition.y, 'cartDebugPlayer');
-        this.logicPlayer.alpha = 0.2;
-
-        this.physics.add.existing(this.logicPlayer);
-    }
-
-    private addParticles() {
-        // add particle emitter
-        this.particleEmitterCrops = this.add.particles(0, 0, 'gameAssets', {
-            frame: 'object/cropParticle.png',
-            lifespan: 500,
-            speed: {min: 50, max: 100},
-            scale: {start: 0.1, end: 1},
-            rotate: {start: 0, end: 180},
-            alpha: {start: 1, end: 0},
-            gravityY: 4,
-            emitting: false
+            const isoPoint = this.cartesianHelper.getCartesianToIsoCoordinate(point);
+            isoImage.x = this.isoGridGlobalCenter.x + isoPoint.x;
+            isoImage.y = this.isoGridGlobalCenter.y + (isoPoint.y - this.ISO_TILE_HEIGHT * 0.5);
         });
     }
 
-    private addEventListeners() {
-        this.controls.inputActionEvent.addListener(Controls.INPUT_ACTION_EVENT_KEY, (key: string) => {
-            switch (key) {
-                case Controls.INPUT_ACTION_EVENT_KEY_BUTTON_L:
-                    this.cyclePlayerVehicle(-1);
-                    break;
-                case Controls.INPUT_ACTION_EVENT_KEY_BUTTON_R:
-                    this.cyclePlayerVehicle(1);
-                    break;
-                case Controls.INPUT_ACTION_EVENT_KEY_BUTTON_A:
-                    if (!this.audioHonk.isPlaying) {
-                        this.audioHonk.play();
-                    }
-                    break;
+    /**
+     * Updates the scale and animation of the rendered player depending on move direction / input
+     */
+    public updateRenderPlayerVehicle() {
+        // Moving UP
+        if (this.moveDir.y === -1 && this.playerFacingDir === -1) {
+            this.renderPlayerVehicle.scaleX = -1;
+            this.renderPlayerVehicle.play(this.renderPlayerVehicle.ANIM_KEY_MOVE_FRONT, true);
+        }
+
+        // Moving DOWN
+        if (this.moveDir.y === 1 && this.playerFacingDir === -1) {
+            this.renderPlayerVehicle.scaleX = -1;
+            this.renderPlayerVehicle.play(this.renderPlayerVehicle.ANIM_KEY_MOVE_BACK, true);
+        }
+
+        // Moving LEFT
+        if (this.moveDir.x === 1 && this.playerFacingDir === 1) {
+            this.renderPlayerVehicle.scaleX = 1;
+            this.renderPlayerVehicle.play(this.renderPlayerVehicle.ANIM_KEY_MOVE_BACK, true);
+        }
+
+        // Moving RIGHT
+        if (this.moveDir.x === -1 && this.playerFacingDir === 1) {
+            this.renderPlayerVehicle.scaleX = 1;
+            this.renderPlayerVehicle.play(this.renderPlayerVehicle.ANIM_KEY_MOVE_FRONT, true);
+        }
+
+        // Not moving AT ALL
+        if (this.moveDir.x === 0 && this.moveDir.y === 0) {
+            if (this.lastDirection === 'down' || this.lastDirection == 'left') {
+                this.renderPlayerVehicle.play(this.renderPlayerVehicle.ANIM_KEY_IDLE_BACK, true);
             }
-        })
+
+            if (this.lastDirection === 'up' || this.lastDirection === 'right') {
+                this.renderPlayerVehicle.play(this.renderPlayerVehicle.ANIM_KEY_IDLE_FRONT, true);
+            }
+        }
+
+    }
+
+    public updateAnimations() {
+        if (this.moveDir.x === 0 && this.moveDir.y === 0) {
+            this.renderPlayerVehicle.scaleX = this.playerFacingDir + (0.05 * Math.sin(this.time.now / 1000));
+            this.renderPlayerVehicle.scaleY = 1 + (0.12 * Math.sin(this.time.now / 1000));
+        } else {
+            this.renderPlayerVehicle.scaleX = this.playerFacingDir + (0.05 * Math.sin(this.time.now / 100));
+            this.renderPlayerVehicle.scaleY = 1 + (0.08 * Math.sin(this.time.now / 100));
+        }
+    }
+
+
+    /* ---------------------------------------------------------------
+    * MISC.
+     ---------------------------------------------------------------*/
+
+    public playAudioHonk(): void {
+        if (!this.audioHonk.isPlaying) {
+            this.audioHonk.play();
+        }
+    }
+
+    public playAudioCoin(): void {
+        if (!this.audioCoin.isPlaying) {
+            this.audioCoin.play();
+        }
     }
 
     /**
      * @private
      * @param dir
      */
-    private cyclePlayerVehicle(dir: number) {
+    public cyclePlayerVehicle(dir: number) {
         const nextIndex = this.selectedPlayerModelIndex + dir;
 
         if (nextIndex > this.availableVehicles.length - 1) {
@@ -366,145 +532,32 @@ export class TileScene extends Phaser.Scene {
         this.renderPlayerVehicle.visible = true;
     }
 
+    /* ---------------------------------------------------------------
+    * GETTER & SETTER
+     ---------------------------------------------------------------*/
 
-    private updateInput() {
 
-        this.moveDir.x = 0;
-        this.moveDir.y = 0;
-        let inputLocked = false;
-
-        if (this.controls.up() && !inputLocked) {
-            this.lastDirection = 'up';
-            this.moveDir.y = -1;
-
-            this.playerFacingDir = this.renderPlayerVehicle.scaleX = -1;
-
-            this.renderPlayerVehicle.play(this.renderPlayerVehicle.ANIM_KEY_MOVE_FRONT, true);
-
-            inputLocked = true;
-        }
-
-        if (this.controls.down() && !inputLocked) {
-            this.lastDirection = 'down';
-
-            this.moveDir.y = 1;
-
-            this.playerFacingDir = this.renderPlayerVehicle.scaleX = -1;
-
-            this.renderPlayerVehicle.play(this.renderPlayerVehicle.ANIM_KEY_MOVE_BACK, true);
-
-            inputLocked = true;
-        }
-
-        if (this.controls.left() && !inputLocked) {
-            this.lastDirection = 'left';
-
-            this.moveDir.x = 1;
-
-            this.playerFacingDir = this.renderPlayerVehicle.scaleX = 1;
-
-            this.renderPlayerVehicle.play(this.renderPlayerVehicle.ANIM_KEY_MOVE_BACK, true);
-
-            inputLocked = true;
-        }
-
-        if (this.controls.right() && !inputLocked) {
-            this.lastDirection = 'right';
-
-            this.moveDir.x = -1;
-            this.playerFacingDir = 1;
-
-            this.renderPlayerVehicle.scaleX = 1;
-            this.renderPlayerVehicle.play(this.renderPlayerVehicle.ANIM_KEY_MOVE_FRONT, true);
-
-            inputLocked = true;
-        }
-
-        if (this.moveDir.x === 0 && this.moveDir.y === 0) {
-            if (this.lastDirection === 'down' || this.lastDirection === 'left') {
-                this.renderPlayerVehicle.play(this.renderPlayerVehicle.ANIM_KEY_IDLE_BACK, true);
-            }
-
-            if (this.lastDirection === 'up' || this.lastDirection === 'right') {
-                this.renderPlayerVehicle.play(this.renderPlayerVehicle.ANIM_KEY_IDLE_FRONT, true);
-            }
-        }
+    public getLastDirection(): string {
+        return this.lastDirection;
     }
 
-    update(time: number, delta: number) {
-
-        if (this.controls) {
-            this.controls.update();
-        }
-
-        this.updateInput();
-        this.updateCartesianTilePoints();
-        this.updateLogic();
-        this.updateAudio();
-
-        // this.debugPoints();
-        this.depthSortIsometrics();
-        this.renderIsometric(delta);
-        this.updateAnimations();
+    public setLastDirection(lastDirection: string) {
+        this.lastDirection = lastDirection;
     }
 
-    private cartesianToIsometric(cartPt: Point) {
-        const tempPt = new Point(this.isoGridGlobalCenter.x, this.isoGridGlobalCenter.y);
-        tempPt.x += (Math.floor((cartPt.x - cartPt.y) / 2));
-        tempPt.y += (Math.floor((cartPt.x + cartPt.y) / 4));
-        return tempPt;
+    public getMoveDir(): Point {
+        return this.moveDir;
     }
 
-
-    private depthSortIsometrics() {
-        this.renderObjectsLayer.sort('y', function (a: any, b: any) {
-            if (a.y < b.y) {
-                return -1;
-            }
-            if (a.y > b.y) {
-                return 1;
-            }
-            return 0;
-        });
-
-    };
-
-    private renderIsometric(delta: number) {
-        // this.graphics.clear();
-        this.cartesianPoints.forEach((inPoint, i) => {
-            const point = this.cartesianHelper.getCartesianTilePosition(inPoint, this.TILE_SIZE);
-            // ground
-            const isoPoint = this.cartesianToIsometric(point);
-            const groundTile = this.groundLayer.getChildren()[i] as Phaser.GameObjects.Image;
-            // groundTile.x = (5 * 64) + isoPoint.x;
-            groundTile.x = isoPoint.x;
-            groundTile.y = isoPoint.y;
-        });
-
-        // Update objects
-        this.renderObjectsLayer.getChildren().forEach((object) => {
-            const isoImage = object as IsoImage;
-
-            // do not apply coordinates to the player
-            if (isoImage.name === 'player') {
-                return;
-            }
-
-            const point = this.cartesianHelper.getCartesianTilePosition(this.cartesianPoints[isoImage.getCartesianPointIndex()], this.TILE_SIZE);
-
-            const isoPoint = this.cartesianToIsometric(point);
-            isoImage.x = isoPoint.x;
-            isoImage.y = isoPoint.y - this.ISO_TILE_HEIGHT * 0.5;
-        });
+    public setMoveDir(moveDir: Point) {
+        this.moveDir = moveDir;
     }
 
-    private updateAnimations() {
-        if (this.moveDir.x === 0 && this.moveDir.y === 0) {
-            this.renderPlayerVehicle.scaleX = this.playerFacingDir + (0.05 * Math.sin(this.time.now / 1000));
-            this.renderPlayerVehicle.scaleY = 1 + (0.12 * Math.sin(this.time.now / 1000));
-        } else {
-            this.renderPlayerVehicle.scaleX = this.playerFacingDir + (0.05 * Math.sin(this.time.now / 100));
-            this.renderPlayerVehicle.scaleY = 1 + (0.08 * Math.sin(this.time.now / 100));
-        }
+    public setPlayerFacingDirection(direction: number) {
+        this.playerFacingDir = direction;
+    }
+
+    public getPlayerFacingDirection(): number {
+        return this.playerFacingDir;
     }
 }
