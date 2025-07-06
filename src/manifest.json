@@ -16,5 +16,8 @@
       "sizes": "512x512",
       "type": "image/png"
     }
-  ]
+  ],
+  "_version": "1.0.0",
+  "sap.app": {},
+  "sap.ui": {}
 }
