@@ -11,12 +11,13 @@ import {Tractor} from "../objects/Tractor";
 import {Vehicle} from "../objects/base/Vehicle";
 import {Harvester} from "../objects/Harvester";
 import {CartesianHelper} from "../misc/CartesianHelper";
+import {PlayerInputState} from "../misc/PlayerInputState";
 import {State, StateMachineInterface} from "../interfaces/stateMachine.interface";
 import {MenuState} from "../states/MenuState";
 import {GameOverState} from "../states/GameOverState";
 
 
-export class TileScene extends Phaser.Scene implements StateMachineInterface {
+export class PlayScene extends Phaser.Scene implements StateMachineInterface {
 
     /**
      * Game State
@@ -31,8 +32,6 @@ export class TileScene extends Phaser.Scene implements StateMachineInterface {
     private TILEMAP_SIZE = 40;
 
     private TILE_SIZE = 64;
-
-    private ISO_TILE_WIDTH = 64;
 
     private ISO_TILE_HEIGHT = 32;
 
@@ -49,15 +48,13 @@ export class TileScene extends Phaser.Scene implements StateMachineInterface {
 
     private isoGridHeight: number;
 
-    private isoGridWidth: number;
-
-    private lastDirection: string = 'right';
-
-    private playerFacingDir = 1;
-
-    private moveDir: Point = new Point(0, 0);
+    private inputState: PlayerInputState = new PlayerInputState();
 
     private isoGridGlobalCenter: Point;
+
+    // Reusable scratch points for the per-frame render loops — avoids allocating ~300k Points/sec.
+    private readonly _scratchCart: Point = new Point();
+    private readonly _scratchIso: Point  = new Point();
 
     private cartesianPoints: Point[] = [];
 
@@ -92,7 +89,7 @@ export class TileScene extends Phaser.Scene implements StateMachineInterface {
     private cartesianHelper: CartesianHelper;
 
     constructor() {
-        super({key: 'TileScene'});
+        super({key: 'PlayScene'});
     }
 
     changeState(newState: State): void {
@@ -105,20 +102,6 @@ export class TileScene extends Phaser.Scene implements StateMachineInterface {
         if (this.currentGameState) {
             this.currentGameState.enter(this);
         }
-    }
-
-    getCurrentState(): State {
-        throw new Error("Method not implemented.");
-    }
-
-    updateStateMachine(): void {
-        throw new Error("Method not implemented.");
-    }
-
-    preload(): void {
-        // debug
-        this.load.image('cartDebugObject', './assets/cartDebugObject.png');
-        this.load.image('cartDebugPlayer', './assets/cartDebugPlayer.png');
     }
 
     create(): void {
@@ -158,7 +141,6 @@ export class TileScene extends Phaser.Scene implements StateMachineInterface {
     private createMembers() {
         this.cartesianHelper = new CartesianHelper();
         this.collisionGroup = this.physics.add.group();
-        this.isoGridWidth = this.TILEMAP_SIZE * this.ISO_TILE_WIDTH;
         this.isoGridHeight = this.TILEMAP_SIZE * this.ISO_TILE_HEIGHT;
         this.isoGridGlobalCenter = new Point((this.cameras.main.width * 0.5), (this.cameras.main.height * 0.5) - (this.isoGridHeight * 0.5));
     }
@@ -190,9 +172,9 @@ export class TileScene extends Phaser.Scene implements StateMachineInterface {
             const frame = Phaser.Math.RND.pick(['object/ground_2.png', 'object/ground_1.png']);
             const isoPoint = this.cartesianHelper.getCartesianToIsoCoordinate(point);
             this.groundLayer.add(this.make.image({
-                x: this.isoGridGlobalCenter.x + (isoPoint.x - this.ISO_TILE_WIDTH * 0.5),
-                y: this.isoGridGlobalCenter.y + (isoPoint.y - this.ISO_TILE_HEIGHT * 0.5),
-                key: TileScene.GAME_ATLAS_KEY,
+                x: this.isoGridGlobalCenter.x + isoPoint.x,
+                y: this.isoGridGlobalCenter.y + isoPoint.y,
+                key: PlayScene.GAME_ATLAS_KEY,
                 frame: frame
             }))
         });
@@ -214,22 +196,22 @@ export class TileScene extends Phaser.Scene implements StateMachineInterface {
 
             // Create logic representation
             const point = this.cartesianHelper.getCartesianTilePosition(this.cartesianPoints[index], this.TILE_SIZE);
-            const logicObject = this.physics.add.image(point.x, point.y, 'cartDebugObject');
+            const logicObject = this.physics.add.image(point.x, point.y, '__WHITE');
+            logicObject.alpha = 0;
             logicObject.setDataEnabled();
             logicObject.data.set('cartesianIndex', index);
 
             const body = logicObject.body as Phaser.Physics.Arcade.Body;
             body.setSize(64, 64);
-            logicObject.alpha = 0;
             this.collisionGroup.add(logicObject);
 
             // Create render representation
             const isoPoint = this.cartesianHelper.getCartesianToIsoCoordinate(point);
             const renderObject = new IsoImage({
                 scene: this,
-                x: this.isoGridGlobalCenter.x + (isoPoint.x - 32),
-                y: this.isoGridGlobalCenter.y + (isoPoint.y - 32),
-                texture: TileScene.GAME_ATLAS_KEY,
+                x: this.isoGridGlobalCenter.x + isoPoint.x,
+                y: this.isoGridGlobalCenter.y + (isoPoint.y - this.ISO_TILE_HEIGHT * 0.5),
+                texture: PlayScene.GAME_ATLAS_KEY,
                 frame: 'object/cornfield.png'
             }, index);
             this.renderObjectsLayer.add(renderObject);
@@ -242,10 +224,14 @@ export class TileScene extends Phaser.Scene implements StateMachineInterface {
         const centerPoint = this.cartesianHelper.getCenterOfPoints(this.cartesianPoints);
         const cartPlayerPosition = this.cartesianHelper.getCartesianTilePosition(centerPoint, this.TILE_SIZE);
 
-        this.logicPlayer = this.physics.add.image(cartPlayerPosition.x, cartPlayerPosition.y, 'cartDebugPlayer');
-        this.logicPlayer.alpha = 0.2;
+        this.logicPlayer = this.physics.add.image(cartPlayerPosition.x, cartPlayerPosition.y, '__WHITE');
+        this.logicPlayer.alpha = 0;
 
         this.physics.add.existing(this.logicPlayer);
+    }
+
+    protected buildVehicleRoster(x: number, y: number): Vehicle[] {
+        return [new Tractor(this, x, y), new Harvester(this, x, y)];
     }
 
     private createVehicles() {
@@ -256,7 +242,7 @@ export class TileScene extends Phaser.Scene implements StateMachineInterface {
         const x = this.isoGridGlobalCenter.x + renderPlayerPosition.x;
         const y = this.isoGridGlobalCenter.y + (renderPlayerPosition.y - this.ISO_TILE_HEIGHT * 0.5);
 
-        this.availableVehicles = [new Tractor(this, x, y), new Harvester(this, x, y)];
+        this.availableVehicles = this.buildVehicleRoster(x, y);
 
         this.availableVehicles.forEach((vehicle) => {
             this.add.existing(vehicle);
@@ -325,13 +311,23 @@ export class TileScene extends Phaser.Scene implements StateMachineInterface {
     | UPDATE METHODS
      ---------------------------------------------------------------*/
 
-    public updateCartesianTilePoints() {
+    public updatePlay(): void {
+        this.updateCartesianTilePoints();
+        this.updateLogic();
+        this.updateAudio();
+        this.updateDepthSortIsometrics();
+        this.updateRenderIsometric();
+        this.updateAnimations();
+        this.updateRenderPlayerVehicle();
+    }
+
+    private updateCartesianTilePoints() {
 
         this.cartesianPoints.forEach((inPoint) => {
             const point = inPoint;
 
-            point.x += (this.moveDir.x * this.MOVE_SPEED);
-            point.y += (this.moveDir.y * this.MOVE_SPEED);
+            point.x += (this.inputState.moveDir.x * this.MOVE_SPEED);
+            point.y += (this.inputState.moveDir.y * this.MOVE_SPEED);
 
             const resetPointMinXCart = 0;
             const resetPointMaxXCart = this.TILEMAP_SIZE
@@ -366,17 +362,18 @@ export class TileScene extends Phaser.Scene implements StateMachineInterface {
         });
     }
 
-    public updateLogic() {
+    private updateLogic() {
         this.collisionGroup.getChildren().forEach((object) => {
-            const cartTilePosition = this.cartesianHelper.getCartesianTilePosition(this.cartesianPoints[object.data.get('cartesianIndex')], this.TILE_SIZE);
+            this.cartesianHelper.getCartesianTilePositionInto(
+                this.cartesianPoints[object.data.get('cartesianIndex')], this.TILE_SIZE, this._scratchCart);
             const body = object.body as Phaser.Physics.Arcade.Body;
-            body.x = cartTilePosition.x;
-            body.y = cartTilePosition.y;
+            body.x = this._scratchCart.x;
+            body.y = this._scratchCart.y;
         });
     }
 
-    public updateAudio() {
-        if (this.moveDir.x === 0 && this.moveDir.y === 0) {
+    private updateAudio() {
+        if (this.inputState.moveDir.x === 0 && this.inputState.moveDir.y === 0) {
             this.audioEngine.setVolume(0.3);
             this.audioEngine.applyConfig();
         } else {
@@ -389,95 +386,88 @@ export class TileScene extends Phaser.Scene implements StateMachineInterface {
         }
     }
 
-    public updateDepthSortIsometrics() {
+    private updateDepthSortIsometrics() {
+        if (this.inputState.moveDir.x === 0 && this.inputState.moveDir.y === 0) {
+            return;
+        }
         this.renderObjectsLayer.sort('y', function (a: any, b: any) {
-            if (a.y < b.y) {
-                return -1;
-            }
-            if (a.y > b.y) {
-                return 1;
-            }
+            if (a.y < b.y) return -1;
+            if (a.y > b.y) return 1;
             return 0;
         });
+    }
 
-    };
-
-    public updateRenderIsometric(delta: number) {
-        // this.graphics.clear();
+    private updateRenderIsometric() {
         this.cartesianPoints.forEach((inPoint, i) => {
-            const point = this.cartesianHelper.getCartesianTilePosition(inPoint, this.TILE_SIZE);
-            // ground
-            const isoPoint = this.cartesianHelper.getCartesianToIsoCoordinate(point);
+            this.cartesianHelper.getCartesianTilePositionInto(inPoint, this.TILE_SIZE, this._scratchCart);
+            this.cartesianHelper.getCartesianToIsoCoordinateInto(this._scratchCart, this._scratchIso);
             const groundTile = this.groundLayer.getChildren()[i] as Phaser.GameObjects.Image;
-
-            groundTile.x = this.isoGridGlobalCenter.x + isoPoint.x;
-            groundTile.y = this.isoGridGlobalCenter.y + isoPoint.y;
+            groundTile.x = this.isoGridGlobalCenter.x + this._scratchIso.x;
+            groundTile.y = this.isoGridGlobalCenter.y + this._scratchIso.y;
         });
 
-        // Update objects
         this.renderObjectsLayer.getChildren().forEach((object) => {
             const isoImage = object as IsoImage;
-
-            // do not apply coordinates to the player
-            if (isoImage.name === 'player') {
-                return;
-            }
-
-            const point = this.cartesianHelper.getCartesianTilePosition(this.cartesianPoints[isoImage.getCartesianPointIndex()], this.TILE_SIZE);
-
-            const isoPoint = this.cartesianHelper.getCartesianToIsoCoordinate(point);
-            isoImage.x = this.isoGridGlobalCenter.x + isoPoint.x;
-            isoImage.y = this.isoGridGlobalCenter.y + (isoPoint.y - this.ISO_TILE_HEIGHT * 0.5);
+            if (isoImage.name === 'player') return;
+            this.cartesianHelper.getCartesianTilePositionInto(
+                this.cartesianPoints[isoImage.getCartesianPointIndex()], this.TILE_SIZE, this._scratchCart);
+            this.cartesianHelper.getCartesianToIsoCoordinateInto(this._scratchCart, this._scratchIso);
+            isoImage.x = this.isoGridGlobalCenter.x + this._scratchIso.x;
+            isoImage.y = this.isoGridGlobalCenter.y + (this._scratchIso.y - this.ISO_TILE_HEIGHT * 0.5);
         });
     }
 
     /**
      * Updates the scale and animation of the rendered player depending on move direction / input
      */
-    public updateRenderPlayerVehicle() {
+    private updateRenderPlayerVehicle() {
+        const { moveDir, lastDirection, facingDir } = this.inputState;
+
         // Moving UP
-        if (this.moveDir.y === -1 && this.playerFacingDir === -1) {
+        if (moveDir.y === -1 && facingDir === -1) {
             this.renderPlayerVehicle.scaleX = -1;
             this.renderPlayerVehicle.play(this.renderPlayerVehicle.ANIM_KEY_MOVE_FRONT, true);
         }
 
         // Moving DOWN
-        if (this.moveDir.y === 1 && this.playerFacingDir === -1) {
+        if (moveDir.y === 1 && facingDir === -1) {
             this.renderPlayerVehicle.scaleX = -1;
             this.renderPlayerVehicle.play(this.renderPlayerVehicle.ANIM_KEY_MOVE_BACK, true);
         }
 
         // Moving LEFT
-        if (this.moveDir.x === 1 && this.playerFacingDir === 1) {
+        if (moveDir.x === 1 && facingDir === 1) {
             this.renderPlayerVehicle.scaleX = 1;
             this.renderPlayerVehicle.play(this.renderPlayerVehicle.ANIM_KEY_MOVE_BACK, true);
         }
 
         // Moving RIGHT
-        if (this.moveDir.x === -1 && this.playerFacingDir === 1) {
+        if (moveDir.x === -1 && facingDir === 1) {
             this.renderPlayerVehicle.scaleX = 1;
             this.renderPlayerVehicle.play(this.renderPlayerVehicle.ANIM_KEY_MOVE_FRONT, true);
         }
 
         // Not moving AT ALL
-        if (this.moveDir.x === 0 && this.moveDir.y === 0) {
-            if (this.lastDirection === 'down' || this.lastDirection == 'left') {
+        if (moveDir.x === 0 && moveDir.y === 0) {
+            if (lastDirection === 'down' || lastDirection == 'left') {
                 this.renderPlayerVehicle.play(this.renderPlayerVehicle.ANIM_KEY_IDLE_BACK, true);
             }
 
-            if (this.lastDirection === 'up' || this.lastDirection === 'right') {
+            if (lastDirection === 'up' || lastDirection === 'right') {
                 this.renderPlayerVehicle.play(this.renderPlayerVehicle.ANIM_KEY_IDLE_FRONT, true);
             }
         }
 
     }
 
-    public updateAnimations() {
-        if (this.moveDir.x === 0 && this.moveDir.y === 0) {
-            this.renderPlayerVehicle.scaleX = this.playerFacingDir + (0.05 * Math.sin(this.time.now / 1000));
+    private updateAnimations() {
+        const { moveDir, facingDir } = this.inputState;
+
+        if (moveDir.x === 0 && moveDir.y === 0) {
+            this.renderPlayerVehicle.scaleX = facingDir + (0.05 * Math.sin(this.time.now / 1000));
             this.renderPlayerVehicle.scaleY = 1 + (0.12 * Math.sin(this.time.now / 1000));
         } else {
-            this.renderPlayerVehicle.scaleX = this.playerFacingDir + (0.05 * Math.sin(this.time.now / 100));
+            this.renderPlayerVehicle.scaleX = facingDir + (0.05 * Math.sin(this.time.now / 100));
             this.renderPlayerVehicle.scaleY = 1 + (0.08 * Math.sin(this.time.now / 100));
         }
     }
@@ -521,43 +511,13 @@ export class TileScene extends Phaser.Scene implements StateMachineInterface {
         const body = this.logicPlayer.body as Phaser.Physics.Arcade.Body;
         const selectedVehicle = this.availableVehicles[this.selectedPlayerModelIndex];
 
-        if (selectedVehicle instanceof Tractor) {
-            body.setSize(64, 64);
-        }
-
-        if (selectedVehicle instanceof Harvester) {
-            body.setSize(128, 128);
-        }
+        const { width, height } = selectedVehicle.collisionBodySize;
+        body.setSize(width, height);
         this.renderPlayerVehicle = selectedVehicle;
         this.renderPlayerVehicle.visible = true;
     }
 
-    /* ---------------------------------------------------------------
-    * GETTER & SETTER
-     ---------------------------------------------------------------*/
-
-
-    public getLastDirection(): string {
-        return this.lastDirection;
-    }
-
-    public setLastDirection(lastDirection: string) {
-        this.lastDirection = lastDirection;
-    }
-
-    public getMoveDir(): Point {
-        return this.moveDir;
-    }
-
-    public setMoveDir(moveDir: Point) {
-        this.moveDir = moveDir;
-    }
-
-    public setPlayerFacingDirection(direction: number) {
-        this.playerFacingDir = direction;
-    }
-
-    public getPlayerFacingDirection(): number {
-        return this.playerFacingDir;
+    public getInputState(): PlayerInputState {
+        return this.inputState;
     }
 }

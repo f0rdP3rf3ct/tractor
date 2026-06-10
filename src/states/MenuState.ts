@@ -1,25 +1,24 @@
 import {State, StateMachineInterface} from "../interfaces/stateMachine.interface";
-import {TileScene} from "../scenes/tile-scene";
+import {PlayScene} from "../scenes/play-scene";
 import {Controls} from "../misc/Controls";
 import {InGameUI} from "../objects/InGameUI";
 import {CountDownState} from "./CountDownState";
-import Point = Phaser.Geom.Point;
 
 export class MenuState implements State {
 
-    private scene: TileScene;
+    private scene: PlayScene;
 
     private controls: Controls;
 
     private inGameUI: InGameUI;
 
-    constructor(scene: TileScene) {
+    constructor(scene: PlayScene) {
         this.scene = scene;
         this.controls = new Controls(this.scene);
     }
 
     enter(stateMachine: StateMachineInterface): void {
-        this.scene.setMoveDir(new Point(0, 0));
+        this.scene.getInputState().moveDir.setTo(0, 0);
         this.addEventListeners();
 
         this.inGameUI = new InGameUI(this.scene, 400, 300);

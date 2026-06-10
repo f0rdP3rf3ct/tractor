@@ -1,6 +1,3 @@
-import {Scene} from "phaser";
-import {TileScene} from "../scenes/tile-scene";
-
 export interface State {
 
     enter(stateMachine: StateMachineInterface): void;
@@ -12,8 +9,4 @@ export interface State {
 
 export interface StateMachineInterface {
     changeState(newState: State): void;
-
-    getCurrentState(): State;
-
-    updateStateMachine(): void;
 }

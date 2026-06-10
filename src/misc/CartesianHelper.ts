@@ -85,8 +85,24 @@ export class CartesianHelper {
      */
     public getCartesianToIsoCoordinate(point: Point): Point {
         const tempPt = new Point();
-        tempPt.x += (Math.floor((point.x - point.y) / 2));
-        tempPt.y += (Math.floor((point.x + point.y) / 4));
+        // Standard 2:1 iso projection. Input is in pixel space (scaled by TILE_SIZE=64).
+        // Divisor 2 = TILE_SIZE / ISO_TILE_WIDTH  (64/64=1, then ÷2 for screen x → ÷2)
+        tempPt.x = Math.floor((point.x - point.y) / 2);
+        // Divisor 4 = TILE_SIZE / ISO_TILE_HEIGHT (64/32=2, then ÷2 for screen y → ÷4)
+        tempPt.y = Math.floor((point.x + point.y) / 4);
         return tempPt;
+    }
+
+    /** Zero-allocation variant — writes into `out` instead of allocating a new Point. */
+    public getCartesianTilePositionInto(point: Point, tileSize: number, out: Point): void {
+        out.x = point.x * tileSize;
+        out.y = point.y * tileSize;
+    }
+
+    /** Zero-allocation variant — writes into `out` instead of allocating a new Point. */
+    public getCartesianToIsoCoordinateInto(point: Point, out: Point): void {
+        // Same projection as getCartesianToIsoCoordinate; see that method for divisor explanation.
+        out.x = Math.floor((point.x - point.y) / 2);
+        out.y = Math.floor((point.x + point.y) / 4);
     }
 }

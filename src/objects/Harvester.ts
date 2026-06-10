@@ -9,6 +9,8 @@ export class Harvester extends Vehicle {
     public ANIM_KEY_IDLE_FRONT = 'harvester_idle_front';
     public ANIM_KEY_IDLE_BACK = 'harvester_idle_back';
 
+    public get collisionBodySize() { return { width: 128, height: 128 }; }
+
     static SPRITE_SHEET_PREFIX_HARVESTER_MOVE_FRONT = 'harvester_move/move_front_';
     static SPRITE_SHEET_PREFIX_HARVESTER_MOVE_BACK = 'harvester_move/move_back_';
 
