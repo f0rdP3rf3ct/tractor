@@ -8,6 +8,8 @@ export abstract class Vehicle extends Phaser.GameObjects.Sprite {
     public abstract ANIM_KEY_IDLE_FRONT: string;
     public abstract ANIM_KEY_IDLE_BACK: string;
 
+    public abstract get collisionBodySize(): { width: number; height: number };
+
     protected constructor(scene: Phaser.Scene, x: number, y: number, texture: string | Phaser.Textures.Texture, frame: string | number) {
         super(scene, x, y, texture, frame);
         this.name = 'player';

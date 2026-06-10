@@ -1,6 +1,5 @@
 import {Scene} from "phaser";
 import Image = Phaser.GameObjects.Image;
-import {TileScene} from "../scenes/tile-scene";
 
 export class EndGameUI extends Phaser.GameObjects.Container {
 
@@ -16,8 +15,11 @@ export class EndGameUI extends Phaser.GameObjects.Container {
 
     protected harvester: Image;
 
-    constructor(scene: Scene, x: number, y: number) {
+    private readonly onCoinPlay: () => void;
+
+    constructor(scene: Scene, x: number, y: number, onCoinPlay: () => void) {
         super(scene, x, y, []);
+        this.onCoinPlay = onCoinPlay;
         this.addChildren();
         this.createTweens();
     }
@@ -46,8 +48,7 @@ export class EndGameUI extends Phaser.GameObjects.Container {
     }
 
     protected playCoinAudio() {
-        const scene = this.scene as TileScene;
-        scene.playAudioCoin();
+        this.onCoinPlay();
     }
 
     protected startMiddleStarTween() {

@@ -59,10 +59,9 @@ Each state implements `State { enter, updateState, exit }`. **Always remove `Con
 2. **Never edit `dist/`** — build output only.
 3. **`collisionGroup` objects must set `cartesianIndex`** via `logicObject.data.set('cartesianIndex', index)` to link to `cartesianPoints[]`.
 4. **`IsoImage.name === 'player'`** skips the player during grid scroll updates — don't set this name on any non-player render object.
-5. **New vehicles**: extend `Vehicle`, implement four `ANIM_KEY_*` constants + `createAnimations()`, register in both `createVehicles()` and `cyclePlayerVehicle()`.
+5. **New vehicles**: extend `Vehicle`, implement four `ANIM_KEY_*` constants + `createAnimations()` + `collisionBodySize` getter, then add to `buildVehicleRoster()` — that is the only method that needs editing.
 6. **New scenes**: add to `GameConfig.scene` array in `config.ts` in correct boot order.
-7. **`getCurrentState()` and `updateStateMachine()` are stubs that throw** — use `changeState()` instead.
-8. **Production build uses `webpack.production.config.js`**, not `webpack.config.js`.
+7. **Production build uses `webpack.production.config.js`**, not `webpack.config.js`.
 
 ## Coding Standards
 

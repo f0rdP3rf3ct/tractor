@@ -125,9 +125,8 @@ Two `Phaser.GameObjects.Layer` objects within `TileScene`:
 ### Adding a new vehicle type
 
 1. Create `src/objects/MyVehicle.ts` extending `Vehicle`.
-2. Define the four `ANIM_KEY_*` strings and implement `createAnimations()` following the pattern in `Tractor.ts`.
-3. Register in `TileScene.createVehicles()` — push a new instance into `availableVehicles`.
-4. Set the physics body size in `TileScene.cyclePlayerVehicle()` based on `instanceof`.
+2. Define the four `ANIM_KEY_*` strings and implement `createAnimations()` and `collisionBodySize` getter following the pattern in `Tractor.ts`.
+3. Add the new instance to `TileScene.buildVehicleRoster()` — that is the only method that needs editing.
 
 ### Adding a new game state
 
@@ -219,7 +218,7 @@ npx tsc --noEmit
 3. **Always remove event listeners in `exit()`.** `Controls.inputActionEvent` listeners accumulate across state transitions if not removed.
 4. **Never edit the `.js` siblings** of `.ts` files (`game.js`, `config.js`, etc.). They are stale artifacts.
 5. **Dual representation is required for new interactive objects.** A logic `physics.add.image` (invisible) + a render `IsoImage` or `Vehicle` (no physics body) — not one object doing both.
-6. **New vehicles must be registered in `createVehicles()` and `cyclePlayerVehicle()`.** Missing either causes silent incorrect behavior.
+6. **New vehicles must be added to `buildVehicleRoster()` and must implement the `collisionBodySize` getter.** Missing either causes silent incorrect behavior.
 7. **New scenes must be added to `GameConfig.scene` array in `config.ts`** in the correct boot order.
 8. **Do not modify `dist/`** — it is a build artifact.
 9. **Do not add test infrastructure** unless explicitly requested.
@@ -229,7 +228,6 @@ npx tsc --noEmit
 
 ## Common Pitfalls
 
-- **`getCurrentState()` and `updateStateMachine()` throw** on `TileScene` — they are stubs. Do not call them; use `changeState()` instead.
 - **Isometric Y-sorting must stay** in `updateDepthSortIsometrics()` — removing it causes vehicles to render under/over crops incorrectly.
 - **`moveDir` coordinates are inverted from intuition**: moving "right" sets `moveDir.x = -1`; moving "left" sets `moveDir.x = 1`. This is intentional — the grid scrolls opposite to the player's apparent movement direction.
 - **`collisionGroup` members carry a `cartesianIndex` data key** that links them to `cartesianPoints[]`. This index must be preserved when creating new objects via `logicObject.data.set('cartesianIndex', index)`.

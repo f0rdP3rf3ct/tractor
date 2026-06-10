@@ -1,7 +1,6 @@
 import {State, StateMachineInterface} from "../interfaces/stateMachine.interface";
 import {Controls} from "../misc/Controls";
 import {EndGameUI} from "../objects/EndGameUI";
-import {Scene} from "phaser";
 import {TileScene} from "../scenes/tile-scene";
 
 export class GameOverState implements State {
@@ -18,7 +17,7 @@ export class GameOverState implements State {
     }
 
     enter(stateMachine: StateMachineInterface): void {
-        this.endGameUI = new EndGameUI(this.scene, 400, 300);
+        this.endGameUI = new EndGameUI(this.scene, 400, 300, () => this.scene.playAudioCoin());
         this.scene.add.existing(this.endGameUI);
         this.addEventListeners();
     }

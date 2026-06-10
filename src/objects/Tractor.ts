@@ -15,6 +15,8 @@ export class Tractor extends Vehicle {
     public ANIM_KEY_IDLE_FRONT = 'tractor_idle_front';
     public ANIM_KEY_IDLE_BACK = 'tractor_idle_back';
 
+    public get collisionBodySize() { return { width: 64, height: 64 }; }
+
     constructor(scene: Phaser.Scene, x: number, y: number) {
         super(scene, x, y, Vehicle.ATLAS_KEY, Tractor.IDLE_FRAME);
     }

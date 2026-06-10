@@ -26,15 +26,7 @@ export class PlayState implements State {
 
     public updateState(stateMachine: StateMachineInterface, delta: number): void {
         this.updateInput();
-
-        this.scene.updateCartesianTilePoints();
-        this.scene.updateLogic();
-        this.scene.updateAudio();
-        this.scene.updateDepthSortIsometrics();
-        this.scene.updateRenderIsometric(delta);
-        this.scene.updateAnimations();
-
-        this.scene.updateRenderPlayerVehicle();
+        this.scene.updatePlay(delta);
     }
 
     private addEventListeners(): void {
@@ -60,52 +52,38 @@ export class PlayState implements State {
             this.controls.update();
         }
 
-        let moveDir = this.scene.getMoveDir();
-        let lastDirection = this.scene.getLastDirection();
-        let playerFacingDir = this.scene.getPlayerFacingDirection();
+        const input = this.scene.getInputState();
         let inputLocked = false;
 
-        moveDir.x = moveDir.y = 0;
+        input.moveDir.x = input.moveDir.y = 0;
 
         if (this.controls.up() && !inputLocked) {
-            lastDirection = 'up';
-
-            moveDir.y = -1;
-            playerFacingDir = -1;
-
+            input.lastDirection = 'up';
+            input.moveDir.y = -1;
+            input.facingDir = -1;
             inputLocked = true;
         }
 
         if (this.controls.down() && !inputLocked) {
-            lastDirection = 'down';
-
-            moveDir.y = 1;
-            playerFacingDir = -1;
-
+            input.lastDirection = 'down';
+            input.moveDir.y = 1;
+            input.facingDir = -1;
             inputLocked = true;
         }
 
         if (this.controls.left() && !inputLocked) {
-            lastDirection = 'left';
-
-            moveDir.x = 1;
-            playerFacingDir = 1;
-
+            input.lastDirection = 'left';
+            input.moveDir.x = 1;
+            input.facingDir = 1;
             inputLocked = true;
         }
 
         if (this.controls.right() && !inputLocked) {
-            lastDirection = 'right';
-
-            moveDir.x = -1;
-            playerFacingDir = 1;
-
+            input.lastDirection = 'right';
+            input.moveDir.x = -1;
+            input.facingDir = 1;
             inputLocked = true;
         }
-
-        this.scene.setMoveDir(moveDir);
-        this.scene.setLastDirection(lastDirection);
-        this.scene.setPlayerFacingDirection(playerFacingDir);
     }
 
 }
