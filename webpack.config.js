@@ -1,5 +1,4 @@
 const path = require('path');
-const webpack = require('webpack');
 
 module.exports = {
   entry: './src/game.ts',
@@ -22,9 +21,6 @@ module.exports = {
       }
     ]
   },
-  plugins: [
-    new webpack.DefinePlugin({ DEBUG: JSON.stringify(true) })
-  ],
   devServer: {
     static: path.resolve(__dirname, './'),
     host: 'localhost',

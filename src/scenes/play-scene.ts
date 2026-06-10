@@ -12,7 +12,6 @@ import {Vehicle} from "../objects/base/Vehicle";
 import {Harvester} from "../objects/Harvester";
 import {CartesianHelper} from "../misc/CartesianHelper";
 import {PlayerInputState} from "../misc/PlayerInputState";
-import {IS_DEBUG, showPhysicsBodies, togglePhysicsBodies} from "../misc/DebugConfig";
 import {State, StateMachineInterface} from "../interfaces/stateMachine.interface";
 import {MenuState} from "../states/MenuState";
 import {GameOverState} from "../states/GameOverState";
@@ -102,13 +101,6 @@ export class PlayScene extends Phaser.Scene implements StateMachineInterface {
 
         if (this.currentGameState) {
             this.currentGameState.enter(this);
-        }
-    }
-
-    preload(): void {
-        if (IS_DEBUG) {
-            this.load.image('cartDebugObject', './assets/cartDebugObject.png');
-            this.load.image('cartDebugPlayer', './assets/cartDebugPlayer.png');
         }
     }
 
@@ -204,13 +196,13 @@ export class PlayScene extends Phaser.Scene implements StateMachineInterface {
 
             // Create logic representation
             const point = this.cartesianHelper.getCartesianTilePosition(this.cartesianPoints[index], this.TILE_SIZE);
-            const logicObject = this.physics.add.image(point.x, point.y, IS_DEBUG ? 'cartDebugObject' : '__WHITE');
+            const logicObject = this.physics.add.image(point.x, point.y, '__WHITE');
+            logicObject.alpha = 0;
             logicObject.setDataEnabled();
             logicObject.data.set('cartesianIndex', index);
 
             const body = logicObject.body as Phaser.Physics.Arcade.Body;
             body.setSize(64, 64);
-            logicObject.alpha = IS_DEBUG ? (showPhysicsBodies ? 0.5 : 0) : 0;
             this.collisionGroup.add(logicObject);
 
             // Create render representation
@@ -232,8 +224,8 @@ export class PlayScene extends Phaser.Scene implements StateMachineInterface {
         const centerPoint = this.cartesianHelper.getCenterOfPoints(this.cartesianPoints);
         const cartPlayerPosition = this.cartesianHelper.getCartesianTilePosition(centerPoint, this.TILE_SIZE);
 
-        this.logicPlayer = this.physics.add.image(cartPlayerPosition.x, cartPlayerPosition.y, IS_DEBUG ? 'cartDebugPlayer' : '__WHITE');
-        this.logicPlayer.alpha = IS_DEBUG ? (showPhysicsBodies ? 0.5 : 0) : 0;
+        this.logicPlayer = this.physics.add.image(cartPlayerPosition.x, cartPlayerPosition.y, '__WHITE');
+        this.logicPlayer.alpha = 0;
 
         this.physics.add.existing(this.logicPlayer);
     }
@@ -484,14 +476,6 @@ export class PlayScene extends Phaser.Scene implements StateMachineInterface {
     /* ---------------------------------------------------------------
     * MISC.
      ---------------------------------------------------------------*/
-
-    public toggleDebugView(): void {
-        if (!IS_DEBUG) return;
-        togglePhysicsBodies();
-        const alpha = showPhysicsBodies ? 0.5 : 0;
-        this.collisionGroup.getChildren().forEach(obj => (obj as Phaser.GameObjects.Image).alpha = alpha);
-        this.logicPlayer.alpha = alpha;
-    }
 
     public playAudioHonk(): void {
         if (!this.audioHonk.isPlaying) {

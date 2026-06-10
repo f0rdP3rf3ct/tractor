@@ -140,12 +140,6 @@ Two `Phaser.GameObjects.Layer` objects within `PlayScene`:
 2. Load in `LoadingScene.loadAssets()` using `this.load.atlas(KEY, png, json)`.
 3. Define the atlas key as a `static` constant on the class that owns it.
 
-### Debug physics view (dev only)
-
-Press `F1` during gameplay to toggle visibility of the Cartesian physics bodies (crops and player logic objects). Only available in dev builds (`npm run dev`). Controlled by the compile-time `DEBUG` flag injected via webpack `DefinePlugin` in both webpack configs — all debug code is dead-code-eliminated from the production bundle and the `cartDebug*.png` assets are excluded from `dist/game.zip`.
-
-Runtime toggle lives in `src/misc/DebugConfig.ts`. The `IS_DEBUG` constant is read at module load time; `togglePhysicsBodies()` flips the runtime state. `PlayScene.toggleDebugView()` applies the updated alpha to all objects in `collisionGroup` and `logicPlayer`.
-
 ### Validating changes
 
 - Build TypeScript: `npm run build` (production) catches type errors.

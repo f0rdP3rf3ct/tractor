@@ -2,8 +2,6 @@ import {State, StateMachineInterface} from "../interfaces/stateMachine.interface
 import {Controls} from "../misc/Controls";
 import {PlayScene} from "../scenes/play-scene";
 import {MenuState} from "./MenuState";
-import {IS_DEBUG} from "../misc/DebugConfig";
-
 export class PlayState implements State {
 
     private controls: Controls;
@@ -23,9 +21,6 @@ export class PlayState implements State {
     }
 
     public exit(): void {
-        if (IS_DEBUG) {
-            this.scene.input.keyboard.off('keydown-F1');
-        }
     }
 
     public updateState(stateMachine: StateMachineInterface, delta: number): void {
@@ -50,11 +45,6 @@ export class PlayState implements State {
             }
         })
 
-        if (IS_DEBUG) {
-            this.scene.input.keyboard.on('keydown-F1', () => {
-                this.scene.toggleDebugView();
-            });
-        }
     }
 
     private updateInput(): void {
