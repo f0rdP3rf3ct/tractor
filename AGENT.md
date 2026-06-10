@@ -40,7 +40,7 @@ Tractor2/
 │   │   ├── boot-scene.ts     # Loads UI atlas, starts LoadingScene
 │   │   ├── loading-scene.ts  # Loads all game assets, starts MenuScene
 │   │   ├── menu-scene.ts     # Main menu (New Game / Controls)
-│   │   └── tile-scene.ts     # Core gameplay scene; owns the state machine
+│   │   └── play-scene.ts     # Core gameplay scene; owns the state machine
 │   ├── objects/
 │   │   ├── base/Vehicle.ts   # Abstract Sprite base for player vehicles
 │   │   ├── Tractor.ts        # Concrete vehicle (small collision box: 64×64)
@@ -49,7 +49,7 @@ Tractor2/
 │   │   ├── InGameUI.ts       # In-game controls modal (Container)
 │   │   └── EndGameUI.ts      # Victory modal with star animations (Container)
 │   ├── states/
-│   │   ├── MenuState.ts      # Pause/menu overlay inside TileScene
+│   │   ├── MenuState.ts      # Pause/menu overlay inside PlayScene
 │   │   ├── CountDownState.ts # 3-2-1-"Harvest All!" countdown before play
 │   │   ├── PlayState.ts      # Active gameplay loop
 │   │   └── GameOverState.ts  # Win screen; returns to MenuScene
@@ -88,11 +88,11 @@ The conversion is done by `CartesianHelper.getCartesianToIsoCoordinate()`.
 
 ### Infinite Scroll
 
-`TileScene` holds a `cartesianPoints: Point[]` array. Every frame `updateCartesianTilePoints()` offsets each point by `moveDir * MOVE_SPEED`, then wraps out-of-bounds values back to the opposite edge. Both logic and render objects are repositioned each frame from this array.
+`PlayScene` holds a `cartesianPoints: Point[]` array. Every frame `updateCartesianTilePoints()` offsets each point by `moveDir * MOVE_SPEED`, then wraps out-of-bounds values back to the opposite edge. Both logic and render objects are repositioned each frame from this array.
 
 ### State Machine
 
-`TileScene` implements `StateMachineInterface`. Active states:
+`PlayScene` implements `StateMachineInterface`. Active states:
 
 ```
 MenuState → (BUTTON_A) → CountDownState → PlayState
@@ -104,7 +104,7 @@ Each state is a class implementing `State { enter, updateState, exit }`. States 
 
 ### Render Layering
 
-Two `Phaser.GameObjects.Layer` objects within `TileScene`:
+Two `Phaser.GameObjects.Layer` objects within `PlayScene`:
 - `groundLayer` — static tile images (ground)
 - `renderObjectsLayer` — crops, vehicles (depth-sorted by Y each frame via `updateDepthSortIsometrics()`)
 
@@ -116,7 +116,7 @@ Two `Phaser.GameObjects.Layer` objects within `TileScene`:
 
 - `BootScene` preloads only the UI atlas (needed for the loading screen).
 - `LoadingScene.loadAssets()` loads all gameplay atlases and audio.
-- Atlas keys are static constants on the class that uses them (`TileScene.GAME_ATLAS_KEY`, `LoadingScene.UI_ATLAS_KEY`, `InGameUI.INGAME_UI_KEY`).
+- Atlas keys are static constants on the class that uses them (`PlayScene.GAME_ATLAS_KEY`, `LoadingScene.UI_ATLAS_KEY`, `InGameUI.INGAME_UI_KEY`).
 
 ---
 
@@ -126,7 +126,7 @@ Two `Phaser.GameObjects.Layer` objects within `TileScene`:
 
 1. Create `src/objects/MyVehicle.ts` extending `Vehicle`.
 2. Define the four `ANIM_KEY_*` strings and implement `createAnimations()` and `collisionBodySize` getter following the pattern in `Tractor.ts`.
-3. Add the new instance to `TileScene.buildVehicleRoster()` — that is the only method that needs editing.
+3. Add the new instance to `PlayScene.buildVehicleRoster()` — that is the only method that needs editing.
 
 ### Adding a new game state
 
@@ -152,8 +152,8 @@ Two `Phaser.GameObjects.Layer` objects within `TileScene`:
 
 ### Naming
 
-- Classes: `PascalCase` (e.g. `TileScene`, `CartesianHelper`)
-- Files: `kebab-case` for scenes (`tile-scene.ts`, `boot-scene.ts`), `PascalCase` for objects/states/misc
+- Classes: `PascalCase` (e.g. `PlayScene`, `CartesianHelper`)
+- Files: `kebab-case` for scenes (`play-scene.ts`, `boot-scene.ts`), `PascalCase` for objects/states/misc
 - Constants: `SCREAMING_SNAKE_CASE` for static class members (`GAME_ATLAS_KEY`, `ANIM_KEY_MOVE_FRONT`)
 - Private instance fields: `camelCase` with `private` modifier
 - Interfaces: prefixed with `I` (`IImageConstructor`)
@@ -161,7 +161,7 @@ Two `Phaser.GameObjects.Layer` objects within `TileScene`:
 ### TypeScript
 
 - `noImplicitAny: true` — all parameters must be typed.
-- Use Phaser type aliases at the top of file with `import X = Phaser.Y.Z` (see `tile-scene.ts` for pattern).
+- Use Phaser type aliases at the top of file with `import X = Phaser.Y.Z` (see `play-scene.ts` for pattern).
 - Avoid `any` unless interfacing with Phaser internals that require it (e.g. `onPlayerCollision` params).
 
 ### File Organization
@@ -174,7 +174,7 @@ Two `Phaser.GameObjects.Layer` objects within `TileScene`:
 
 ### Comments
 
-- Section dividers in long files use `/* --- SECTION NAME --- */` blocks (see `tile-scene.ts`).
+- Section dividers in long files use `/* --- SECTION NAME --- */` blocks (see `play-scene.ts`).
 - JSDoc only on non-obvious utility methods (`CartesianHelper`).
 - Do not comment obvious code.
 

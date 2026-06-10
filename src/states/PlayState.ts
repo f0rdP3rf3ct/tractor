@@ -1,17 +1,17 @@
 import {State, StateMachineInterface} from "../interfaces/stateMachine.interface";
 import {Controls} from "../misc/Controls";
-import {TileScene} from "../scenes/tile-scene";
+import {PlayScene} from "../scenes/play-scene";
 import {MenuState} from "./MenuState";
 
 export class PlayState implements State {
 
     private controls: Controls;
 
-    private scene: TileScene;
+    private scene: PlayScene;
 
     private stateMachine: StateMachineInterface;
 
-    constructor(scene: TileScene) {
+    constructor(scene: PlayScene) {
         this.scene = scene;
         this.controls = new Controls(scene);
     }

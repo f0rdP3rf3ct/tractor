@@ -17,7 +17,7 @@ import {MenuState} from "../states/MenuState";
 import {GameOverState} from "../states/GameOverState";
 
 
-export class TileScene extends Phaser.Scene implements StateMachineInterface {
+export class PlayScene extends Phaser.Scene implements StateMachineInterface {
 
     /**
      * Game State
@@ -89,7 +89,7 @@ export class TileScene extends Phaser.Scene implements StateMachineInterface {
     private cartesianHelper: CartesianHelper;
 
     constructor() {
-        super({key: 'TileScene'});
+        super({key: 'PlayScene'});
     }
 
     changeState(newState: State): void {
@@ -180,7 +180,7 @@ export class TileScene extends Phaser.Scene implements StateMachineInterface {
             this.groundLayer.add(this.make.image({
                 x: this.isoGridGlobalCenter.x + isoPoint.x,
                 y: this.isoGridGlobalCenter.y + isoPoint.y,
-                key: TileScene.GAME_ATLAS_KEY,
+                key: PlayScene.GAME_ATLAS_KEY,
                 frame: frame
             }))
         });
@@ -217,7 +217,7 @@ export class TileScene extends Phaser.Scene implements StateMachineInterface {
                 scene: this,
                 x: this.isoGridGlobalCenter.x + isoPoint.x,
                 y: this.isoGridGlobalCenter.y + (isoPoint.y - this.ISO_TILE_HEIGHT * 0.5),
-                texture: TileScene.GAME_ATLAS_KEY,
+                texture: PlayScene.GAME_ATLAS_KEY,
                 frame: 'object/cornfield.png'
             }, index);
             this.renderObjectsLayer.add(renderObject);

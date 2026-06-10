@@ -1,17 +1,17 @@
 import {State, StateMachineInterface} from "../interfaces/stateMachine.interface";
 import {Controls} from "../misc/Controls";
 import {EndGameUI} from "../objects/EndGameUI";
-import {TileScene} from "../scenes/tile-scene";
+import {PlayScene} from "../scenes/play-scene";
 
 export class GameOverState implements State {
 
-    private scene: TileScene;
+    private scene: PlayScene;
 
     private controls: Controls;
 
     private endGameUI: EndGameUI;
 
-    constructor(scene: TileScene) {
+    constructor(scene: PlayScene) {
         this.scene = scene;
         this.controls = new Controls(this.scene);
     }

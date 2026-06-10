@@ -30,11 +30,11 @@ Conversion via `CartesianHelper.getCartesianToIsoCoordinate()`.
 
 ### Infinite Scroll
 
-`TileScene` holds `cartesianPoints: Point[]`. Each frame `updateCartesianTilePoints()` offsets points by `moveDir * MOVE_SPEED` and wraps out-of-bounds values back to the opposite edge. **`moveDir` is inverted from intuition**: moving "right" sets `moveDir.x = -1` (the grid scrolls opposite to apparent movement).
+`PlayScene` holds `cartesianPoints: Point[]`. Each frame `updateCartesianTilePoints()` offsets points by `moveDir * MOVE_SPEED` and wraps out-of-bounds values back to the opposite edge. **`moveDir` is inverted from intuition**: moving "right" sets `moveDir.x = -1` (the grid scrolls opposite to apparent movement).
 
 ### State Machine
 
-`TileScene` implements `StateMachineInterface`. Flow:
+`PlayScene` implements `StateMachineInterface`. Flow:
 ```
 MenuState → (BUTTON_A) → CountDownState → PlayState
 PlayState → (all crops collected) → GameOverState → MenuScene
@@ -69,6 +69,6 @@ Each state implements `State { enter, updateState, exit }`. **Always remove `Con
 - Constants: `SCREAMING_SNAKE_CASE` for static class members
 - Interfaces: `I`-prefixed (`IImageConstructor`)
 - `noImplicitAny: true` — all parameters must be typed
-- Import Phaser types at the top with `import X = Phaser.Y.Z` pattern (see `tile-scene.ts`)
+- Import Phaser types at the top with `import X = Phaser.Y.Z` pattern (see `play-scene.ts`)
 - One class per file; section dividers use `/* --- SECTION NAME --- */` in long files
 - Remove any `console.log` encountered when touching a file — they exist in production paths (`Tractor.ts`, `CountDownState.ts`)

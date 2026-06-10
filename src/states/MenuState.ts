@@ -1,18 +1,18 @@
 import {State, StateMachineInterface} from "../interfaces/stateMachine.interface";
-import {TileScene} from "../scenes/tile-scene";
+import {PlayScene} from "../scenes/play-scene";
 import {Controls} from "../misc/Controls";
 import {InGameUI} from "../objects/InGameUI";
 import {CountDownState} from "./CountDownState";
 
 export class MenuState implements State {
 
-    private scene: TileScene;
+    private scene: PlayScene;
 
     private controls: Controls;
 
     private inGameUI: InGameUI;
 
-    constructor(scene: TileScene) {
+    constructor(scene: PlayScene) {
         this.scene = scene;
         this.controls = new Controls(this.scene);
     }

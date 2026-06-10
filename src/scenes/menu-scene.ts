@@ -34,7 +34,7 @@ export class MenuScene extends Phaser.Scene {
 
             switch (key) {
                 case Controls.INPUT_ACTION_EVENT_KEY_BUTTON_A:
-                    this.scene.start('TileScene');
+                    this.scene.start('PlayScene');
                     break;
             }
 

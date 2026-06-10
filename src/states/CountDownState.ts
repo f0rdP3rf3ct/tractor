@@ -1,5 +1,5 @@
 import {State, StateMachineInterface} from "../interfaces/stateMachine.interface";
-import {TileScene} from "../scenes/tile-scene";
+import {PlayScene} from "../scenes/play-scene";
 import {InGameUI} from "../objects/InGameUI";
 import {PlayState} from "./PlayState";
 import Image = Phaser.GameObjects.Image;
@@ -8,13 +8,13 @@ import TweenChainBuilderConfig = Phaser.Types.Tweens.TweenChainBuilderConfig;
 
 export class CountDownState implements State {
 
-    private scene: TileScene;
+    private scene: PlayScene;
 
     private animContainer: Container;
 
     private currentAnimIndex: number = 0;
 
-    constructor(scene: TileScene) {
+    constructor(scene: PlayScene) {
         this.scene = scene;
     }
 
