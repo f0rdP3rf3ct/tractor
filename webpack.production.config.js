@@ -1,4 +1,5 @@
 const path = require('path');
+const webpack = require('webpack');
 const CopyPlugin = require("copy-webpack-plugin");
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const ZipPlugin = require('zip-webpack-plugin');
@@ -26,6 +27,7 @@ module.exports = {
         ]
     },
     plugins: [
+        new webpack.DefinePlugin({ DEBUG: JSON.stringify(false) }),
         new HtmlWebpackPlugin({
             filename: "index.html",
             template: './src/index.html',
@@ -44,7 +46,7 @@ module.exports = {
         }),
         new CopyPlugin({
                 patterns: [
-                    {from: 'assets/**/*', to: '', globOptions: {ignore: ['**/less/**']}},
+                    {from: 'assets/**/*', to: '', globOptions: {ignore: ['**/less/**', '**/cartDebug*.png']}},
                     {from: 'src/manifest.json', to: ''}, // PWA
                     {from: 'src/sw.js', to: ''} // PWA
                 ]
