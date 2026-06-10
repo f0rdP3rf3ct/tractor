@@ -26,7 +26,7 @@ export class PlayState implements State {
 
     public updateState(stateMachine: StateMachineInterface, delta: number): void {
         this.updateInput();
-        this.scene.updatePlay(delta);
+        this.scene.updatePlay();
     }
 
     private addEventListeners(): void {

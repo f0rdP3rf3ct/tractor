@@ -33,8 +33,6 @@ export class TileScene extends Phaser.Scene implements StateMachineInterface {
 
     private TILE_SIZE = 64;
 
-    private ISO_TILE_WIDTH = 64;
-
     private ISO_TILE_HEIGHT = 32;
 
     private INNER_MOST_BLANKS_TILE_SIZE = 9;
@@ -50,11 +48,13 @@ export class TileScene extends Phaser.Scene implements StateMachineInterface {
 
     private isoGridHeight: number;
 
-    private isoGridWidth: number;
-
     private inputState: PlayerInputState = new PlayerInputState();
 
     private isoGridGlobalCenter: Point;
+
+    // Reusable scratch points for the per-frame render loops — avoids allocating ~300k Points/sec.
+    private readonly _scratchCart: Point = new Point();
+    private readonly _scratchIso: Point  = new Point();
 
     private cartesianPoints: Point[] = [];
 
@@ -147,7 +147,6 @@ export class TileScene extends Phaser.Scene implements StateMachineInterface {
     private createMembers() {
         this.cartesianHelper = new CartesianHelper();
         this.collisionGroup = this.physics.add.group();
-        this.isoGridWidth = this.TILEMAP_SIZE * this.ISO_TILE_WIDTH;
         this.isoGridHeight = this.TILEMAP_SIZE * this.ISO_TILE_HEIGHT;
         this.isoGridGlobalCenter = new Point((this.cameras.main.width * 0.5), (this.cameras.main.height * 0.5) - (this.isoGridHeight * 0.5));
     }
@@ -179,8 +178,8 @@ export class TileScene extends Phaser.Scene implements StateMachineInterface {
             const frame = Phaser.Math.RND.pick(['object/ground_2.png', 'object/ground_1.png']);
             const isoPoint = this.cartesianHelper.getCartesianToIsoCoordinate(point);
             this.groundLayer.add(this.make.image({
-                x: this.isoGridGlobalCenter.x + (isoPoint.x - this.ISO_TILE_WIDTH * 0.5),
-                y: this.isoGridGlobalCenter.y + (isoPoint.y - this.ISO_TILE_HEIGHT * 0.5),
+                x: this.isoGridGlobalCenter.x + isoPoint.x,
+                y: this.isoGridGlobalCenter.y + isoPoint.y,
                 key: TileScene.GAME_ATLAS_KEY,
                 frame: frame
             }))
@@ -216,8 +215,8 @@ export class TileScene extends Phaser.Scene implements StateMachineInterface {
             const isoPoint = this.cartesianHelper.getCartesianToIsoCoordinate(point);
             const renderObject = new IsoImage({
                 scene: this,
-                x: this.isoGridGlobalCenter.x + (isoPoint.x - 32),
-                y: this.isoGridGlobalCenter.y + (isoPoint.y - 32),
+                x: this.isoGridGlobalCenter.x + isoPoint.x,
+                y: this.isoGridGlobalCenter.y + (isoPoint.y - this.ISO_TILE_HEIGHT * 0.5),
                 texture: TileScene.GAME_ATLAS_KEY,
                 frame: 'object/cornfield.png'
             }, index);
@@ -318,12 +317,12 @@ export class TileScene extends Phaser.Scene implements StateMachineInterface {
     | UPDATE METHODS
      ---------------------------------------------------------------*/
 
-    public updatePlay(delta: number): void {
+    public updatePlay(): void {
         this.updateCartesianTilePoints();
         this.updateLogic();
         this.updateAudio();
         this.updateDepthSortIsometrics();
-        this.updateRenderIsometric(delta);
+        this.updateRenderIsometric();
         this.updateAnimations();
         this.updateRenderPlayerVehicle();
     }
@@ -371,10 +370,11 @@ export class TileScene extends Phaser.Scene implements StateMachineInterface {
 
     private updateLogic() {
         this.collisionGroup.getChildren().forEach((object) => {
-            const cartTilePosition = this.cartesianHelper.getCartesianTilePosition(this.cartesianPoints[object.data.get('cartesianIndex')], this.TILE_SIZE);
+            this.cartesianHelper.getCartesianTilePositionInto(
+                this.cartesianPoints[object.data.get('cartesianIndex')], this.TILE_SIZE, this._scratchCart);
             const body = object.body as Phaser.Physics.Arcade.Body;
-            body.x = cartTilePosition.x;
-            body.y = cartTilePosition.y;
+            body.x = this._scratchCart.x;
+            body.y = this._scratchCart.y;
         });
     }
 
@@ -393,44 +393,33 @@ export class TileScene extends Phaser.Scene implements StateMachineInterface {
     }
 
     private updateDepthSortIsometrics() {
+        if (this.inputState.moveDir.x === 0 && this.inputState.moveDir.y === 0) {
+            return;
+        }
         this.renderObjectsLayer.sort('y', function (a: any, b: any) {
-            if (a.y < b.y) {
-                return -1;
-            }
-            if (a.y > b.y) {
-                return 1;
-            }
+            if (a.y < b.y) return -1;
+            if (a.y > b.y) return 1;
             return 0;
         });
+    }
 
-    };
-
-    private updateRenderIsometric(delta: number) {
-        // this.graphics.clear();
+    private updateRenderIsometric() {
         this.cartesianPoints.forEach((inPoint, i) => {
-            const point = this.cartesianHelper.getCartesianTilePosition(inPoint, this.TILE_SIZE);
-            // ground
-            const isoPoint = this.cartesianHelper.getCartesianToIsoCoordinate(point);
+            this.cartesianHelper.getCartesianTilePositionInto(inPoint, this.TILE_SIZE, this._scratchCart);
+            this.cartesianHelper.getCartesianToIsoCoordinateInto(this._scratchCart, this._scratchIso);
             const groundTile = this.groundLayer.getChildren()[i] as Phaser.GameObjects.Image;
-
-            groundTile.x = this.isoGridGlobalCenter.x + isoPoint.x;
-            groundTile.y = this.isoGridGlobalCenter.y + isoPoint.y;
+            groundTile.x = this.isoGridGlobalCenter.x + this._scratchIso.x;
+            groundTile.y = this.isoGridGlobalCenter.y + this._scratchIso.y;
         });
 
-        // Update objects
         this.renderObjectsLayer.getChildren().forEach((object) => {
             const isoImage = object as IsoImage;
-
-            // do not apply coordinates to the player
-            if (isoImage.name === 'player') {
-                return;
-            }
-
-            const point = this.cartesianHelper.getCartesianTilePosition(this.cartesianPoints[isoImage.getCartesianPointIndex()], this.TILE_SIZE);
-
-            const isoPoint = this.cartesianHelper.getCartesianToIsoCoordinate(point);
-            isoImage.x = this.isoGridGlobalCenter.x + isoPoint.x;
-            isoImage.y = this.isoGridGlobalCenter.y + (isoPoint.y - this.ISO_TILE_HEIGHT * 0.5);
+            if (isoImage.name === 'player') return;
+            this.cartesianHelper.getCartesianTilePositionInto(
+                this.cartesianPoints[isoImage.getCartesianPointIndex()], this.TILE_SIZE, this._scratchCart);
+            this.cartesianHelper.getCartesianToIsoCoordinateInto(this._scratchCart, this._scratchIso);
+            isoImage.x = this.isoGridGlobalCenter.x + this._scratchIso.x;
+            isoImage.y = this.isoGridGlobalCenter.y + (this._scratchIso.y - this.ISO_TILE_HEIGHT * 0.5);
         });
     }
 
