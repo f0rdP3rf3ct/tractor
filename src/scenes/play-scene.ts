@@ -35,7 +35,7 @@ export class PlayScene extends Phaser.Scene implements StateMachineInterface {
 
     private ISO_TILE_HEIGHT = 32;
 
-    private INNER_MOST_BLANKS_TILE_SIZE = 9;
+    private NUM_BLANK_TILES_IN_MIDDLE = 4;
 
     private MOVE_SPEED = 0.2;
 
@@ -182,7 +182,7 @@ export class PlayScene extends Phaser.Scene implements StateMachineInterface {
 
     private createObjectTiles() {
 
-        const innerMostPoints = this.cartesianHelper.getInnerMostCartesianPoints(this.TILEMAP_SIZE, this.INNER_MOST_BLANKS_TILE_SIZE);
+        const innerMostPoints = this.cartesianHelper.getInnerMostCartesianPoints(this.TILEMAP_SIZE, this.NUM_BLANK_TILES_IN_MIDDLE);
 
         this.cartesianPoints.forEach((inPoint, index) => {
 
