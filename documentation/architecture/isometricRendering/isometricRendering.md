@@ -213,3 +213,20 @@ classDiagram
     class Phaser_GameObjects_Image["Phaser.GameObjects.Image (external)"]
     class Phaser_GameObjects_Sprite["Phaser.GameObjects.Sprite (external)"]
 ```
+## Considerations / Improvements
+What's done well:
+- The dual-representation pattern cleanly sidesteps the hardest problem with isometric physics — logic stays in flat Cartesian space where Arcade physics works      
+  naturally, rendering is a pure projection step
+- The scratch-point optimization (_scratchCart/_scratchIso) shows real performance awareness — avoiding 300k allocations/sec in a GC'd language matters
+- The infinite scroll is elegant: shift points, wrap at boundaries, done — no tile pool, no respawning logic
+- The skip-when-stationary guard on depth sort is a smart cheap win
+
+Things that have tradeoffs:
+- onPlayerCollision does a linear scan of all renderObjectsLayer children to find the matching render object by cartesianIndex — at 1,600+ tiles that's fine, but    
+  it's O(n) on every collision. A Map<number, IsoImage> keyed by index would make it O(1).
+- updateRenderIsometric() and updateLogic() both iterate all ~1,681 points every frame unconditionally. For tiles scrolled off-screen this is wasted work, though at
+  this scale it's unlikely to be the bottleneck.
+- There's an implicit coupling: cartesianPoints[i] must stay in sync with groundLayer.getChildren()[i]. Nothing enforces this alignment — if tiles are ever added or
+  removed mid-game that assumption breaks silently.
+- The depth sort runs on renderObjectsLayer which includes all crops + vehicles — that's potentially O(n log n) on 1,600 objects every frame while moving. In        
+  practice Phaser's sort is fast enough, but it's something to watch if you add more objects.   
