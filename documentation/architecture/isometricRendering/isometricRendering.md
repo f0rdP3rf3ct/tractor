@@ -58,15 +58,18 @@ cartesianPoints[i]  ────────────────────
         └─────────────────────────────────┘
 ```
 
-When a collision is detected, `onPlayerCollision` reads `cartesianIndex` from the logic object and uses it to find the matching render object in `renderObjectsLayer`:
+When a collision is detected, `onPlayerCollision` reads `cartesianIndex` from the logic object and uses it to look up the matching render object in O(1) via `cropRenderMap`:
 
 ```ts
 const index = object.data.get('cartesianIndex');
-const displayObject = this.renderObjectsLayer.getChildren()
-    .filter((child: IsoImage) => child.getCartesianPointIndex() === index);
+const renderObject = this.cropRenderMap.get(index);
+if (renderObject) {
+    this.cropRenderMap.delete(index);
+    renderObject.destroy();
+}
 ```
 
-Both objects are then destroyed independently.
+`cropRenderMap` is a `Map<number, IsoImage>` populated during `createObjectTiles()` alongside the `renderObjectsLayer`. Deleting the entry before `destroy()` keeps the map free of stale references as crops are harvested. Both the logic object and render object are destroyed independently.
 
 ---
 
@@ -165,6 +168,7 @@ classDiagram
         -CartesianHelper cartesianHelper
         -Layer groundLayer
         -Layer renderObjectsLayer
+        -Map cropRenderMap
         -Group collisionGroup
         -PlayerInputState inputState
         -createCartesianTilePoints()
@@ -222,8 +226,6 @@ What's done well:
 - The skip-when-stationary guard on depth sort is a smart cheap win
 
 Things that have tradeoffs:
-- onPlayerCollision does a linear scan of all renderObjectsLayer children to find the matching render object by cartesianIndex — at 1,600+ tiles that's fine, but    
-  it's O(n) on every collision. A Map<number, IsoImage> keyed by index would make it O(1).
 - updateRenderIsometric() and updateLogic() both iterate all ~1,681 points every frame unconditionally. For tiles scrolled off-screen this is wasted work, though at
   this scale it's unlikely to be the bottleneck.
 - There's an implicit coupling: cartesianPoints[i] must stay in sync with groundLayer.getChildren()[i]. Nothing enforces this alignment — if tiles are ever added or

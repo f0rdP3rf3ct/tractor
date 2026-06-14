@@ -66,6 +66,8 @@ export class PlayScene extends Phaser.Scene implements StateMachineInterface {
 
     private renderObjectsLayer: Layer;
 
+    private cropRenderMap: Map<number, IsoImage> = new Map();
+
     private collisionGroup: Group;
 
     private cropsCollected = 0;
@@ -215,6 +217,7 @@ export class PlayScene extends Phaser.Scene implements StateMachineInterface {
                 frame: 'object/cornfield.png'
             }, index);
             this.renderObjectsLayer.add(renderObject);
+            this.cropRenderMap.set(index, renderObject);
             this.cropsInstances++;
         });
 
@@ -281,20 +284,13 @@ export class PlayScene extends Phaser.Scene implements StateMachineInterface {
         if (object) {
             object.destroy();
 
-            // determine with which child collision occurred...
-            const displayObject = this.renderObjectsLayer.getChildren().filter((child: IsoImage) => {
-                if (child.name === 'player') {
-                    return false;
-                }
+            const renderObject = this.cropRenderMap.get(index);
 
-                return child.getCartesianPointIndex() === index;
-            });
-
-            if (displayObject) {
-                displayObject[0].destroy()
+            if (renderObject) {
+                this.cropRenderMap.delete(index);
+                renderObject.destroy();
                 this.audioHarvesting.play();
-                const treatAsImage = displayObject[0] as Image;
-                this.particleEmitterCrops.emitParticleAt(treatAsImage.x, treatAsImage.y, 10);
+                this.particleEmitterCrops.emitParticleAt(renderObject.x, renderObject.y, 10);
                 this.cropsCollected++;
                 this.checkWinCondition();
             }

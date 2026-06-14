@@ -72,3 +72,7 @@ Each state implements `State { enter, updateState, exit }`. **Always remove `Con
 - Import Phaser types at the top with `import X = Phaser.Y.Z` pattern (see `play-scene.ts`)
 - One class per file; section dividers use `/* --- SECTION NAME --- */` in long files
 - Remove any `console.log` encountered when touching a file — they exist in production paths (`Tractor.ts`, `CountDownState.ts`)
+
+## AI Plans
+
+Implementation plans produced during Claude Code sessions are stored in `documentation/ai/plans/`. When writing a plan, save it there (e.g. `documentation/ai/plans/<short-slug>.md`) in addition to the harness plan file.
