@@ -167,6 +167,7 @@ classDiagram
         -Point _scratchIso
         -CartesianHelper cartesianHelper
         -Layer groundLayer
+        -Image[] groundTiles
         -Layer renderObjectsLayer
         -Map cropRenderMap
         -Group collisionGroup
@@ -228,7 +229,5 @@ What's done well:
 Things that have tradeoffs:
 - updateRenderIsometric() and updateLogic() both iterate all ~1,681 points every frame unconditionally. For tiles scrolled off-screen this is wasted work, though at
   this scale it's unlikely to be the bottleneck.
-- There's an implicit coupling: cartesianPoints[i] must stay in sync with groundLayer.getChildren()[i]. Nothing enforces this alignment — if tiles are ever added or
-  removed mid-game that assumption breaks silently.
 - The depth sort runs on renderObjectsLayer which includes all crops + vehicles — that's potentially O(n log n) on 1,600 objects every frame while moving. In        
-  practice Phaser's sort is fast enough, but it's something to watch if you add more objects.   
+  practice Phaser's sort is fast enough, but it's something to watch if you add more objects.
