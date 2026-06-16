@@ -227,7 +227,12 @@ What's done well:
 - The skip-when-stationary guard on depth sort is a smart cheap win
 
 Things that have tradeoffs:
-- updateRenderIsometric() and updateLogic() both iterate all ~1,681 points every frame unconditionally. For tiles scrolled off-screen this is wasted work, though at
-  this scale it's unlikely to be the bottleneck.
+- updateRenderIsometric() and updateLogic() both iterate all ~1,681 points every frame unconditionally, including tiles currently scrolled off-screen. This looks like
+  an obvious culling target, but it isn't a safe or cheap one: updateLogic() must keep every collisionGroup physics body's position correct every frame, even off-screen
+  ones — otherwise the moment a crop scrolls into view its collider would be stale and overlap detection would miss it right as the player reaches it. And in
+  updateRenderIsometric(), visibility is only knowable after running the cartesian → iso projection (the actual cost center), so there's no cheaper pre-check that
+  would let a tile skip the expensive part — skipping just the final `.x`/`.y` assignment after the math already ran saves a trivial write, not the iteration or
+  projection cost. Combined with the fact that the loop is already allocation-free (`_scratchCart`/`_scratchIso`) and operating on plain arithmetic, this is an
+  accepted tradeoff rather than an open issue.
 - The depth sort runs on renderObjectsLayer which includes all crops + vehicles — that's potentially O(n log n) on 1,600 objects every frame while moving. In        
   practice Phaser's sort is fast enough, but it's something to watch if you add more objects.
