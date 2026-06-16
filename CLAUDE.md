@@ -72,3 +72,15 @@ Each state implements `State { enter, updateState, exit }`. **Always remove `Con
 - Import Phaser types at the top with `import X = Phaser.Y.Z` pattern (see `play-scene.ts`)
 - One class per file; section dividers use `/* --- SECTION NAME --- */` in long files
 - Remove any `console.log` encountered when touching a file — they exist in production paths (`Tractor.ts`, `CountDownState.ts`)
+
+## Library Documentation
+
+Use the Context7 MCP server to fetch current documentation for Phaser 3, TypeScript, or Webpack instead of relying on training data — this covers API syntax, configuration, version-specific behavior, and migration questions. Resolve the library ID first, then query docs with the full question.
+
+## Documentation
+
+The `documentation/` folder is the authoritative reference for this project's architecture, design decisions, and AI plans. **Always keep it up to date.**
+
+- After any code change that affects an architectural concept, data structure, pattern, or class described in `documentation/`, update the relevant `.md` file in the same task — not as a follow-up.
+- `documentation/architecture/` covers systems like isometric rendering, the state machine, and the tile pipeline. If you modify a class or pattern described there, update the matching doc.
+- `documentation/ai/plans/` stores implementation plans. When writing a plan, save it there (e.g. `documentation/ai/plans/<short-slug>.md`) in addition to the harness plan file.

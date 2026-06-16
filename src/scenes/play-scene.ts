@@ -64,7 +64,11 @@ export class PlayScene extends Phaser.Scene implements StateMachineInterface {
 
     private groundLayer: Layer;
 
+    private groundTiles: Phaser.GameObjects.Image[] = [];
+
     private renderObjectsLayer: Layer;
+
+    private cropRenderMap: Map<number, IsoImage> = new Map();
 
     private collisionGroup: Group;
 
@@ -171,12 +175,14 @@ export class PlayScene extends Phaser.Scene implements StateMachineInterface {
             const point = this.cartesianHelper.getCartesianTilePosition(inPoint, this.TILE_SIZE);
             const frame = Phaser.Math.RND.pick(['object/ground_2.png', 'object/ground_1.png']);
             const isoPoint = this.cartesianHelper.getCartesianToIsoCoordinate(point);
-            this.groundLayer.add(this.make.image({
+            const tile = this.make.image({
                 x: this.isoGridGlobalCenter.x + isoPoint.x,
                 y: this.isoGridGlobalCenter.y + isoPoint.y,
                 key: PlayScene.GAME_ATLAS_KEY,
                 frame: frame
-            }))
+            });
+            this.groundLayer.add(tile);
+            this.groundTiles.push(tile);
         });
     }
 
@@ -215,6 +221,7 @@ export class PlayScene extends Phaser.Scene implements StateMachineInterface {
                 frame: 'object/cornfield.png'
             }, index);
             this.renderObjectsLayer.add(renderObject);
+            this.cropRenderMap.set(index, renderObject);
             this.cropsInstances++;
         });
 
@@ -281,20 +288,13 @@ export class PlayScene extends Phaser.Scene implements StateMachineInterface {
         if (object) {
             object.destroy();
 
-            // determine with which child collision occurred...
-            const displayObject = this.renderObjectsLayer.getChildren().filter((child: IsoImage) => {
-                if (child.name === 'player') {
-                    return false;
-                }
+            const renderObject = this.cropRenderMap.get(index);
 
-                return child.getCartesianPointIndex() === index;
-            });
-
-            if (displayObject) {
-                displayObject[0].destroy()
+            if (renderObject) {
+                this.cropRenderMap.delete(index);
+                renderObject.destroy();
                 this.audioHarvesting.play();
-                const treatAsImage = displayObject[0] as Image;
-                this.particleEmitterCrops.emitParticleAt(treatAsImage.x, treatAsImage.y, 10);
+                this.particleEmitterCrops.emitParticleAt(renderObject.x, renderObject.y, 10);
                 this.cropsCollected++;
                 this.checkWinCondition();
             }
@@ -401,7 +401,7 @@ export class PlayScene extends Phaser.Scene implements StateMachineInterface {
         this.cartesianPoints.forEach((inPoint, i) => {
             this.cartesianHelper.getCartesianTilePositionInto(inPoint, this.TILE_SIZE, this._scratchCart);
             this.cartesianHelper.getCartesianToIsoCoordinateInto(this._scratchCart, this._scratchIso);
-            const groundTile = this.groundLayer.getChildren()[i] as Phaser.GameObjects.Image;
+            const groundTile = this.groundTiles[i];
             groundTile.x = this.isoGridGlobalCenter.x + this._scratchIso.x;
             groundTile.y = this.isoGridGlobalCenter.y + this._scratchIso.y;
         });
