@@ -1,7 +1,6 @@
 import {State, StateMachineInterface} from "../interfaces/stateMachine.interface";
 import {PlayScene} from "../scenes/play-scene";
 import {Controls} from "../misc/Controls";
-import {InGameUI} from "../objects/InGameUI";
 import {CountDownState} from "./CountDownState";
 
 export class MenuState implements State {
@@ -9,8 +8,6 @@ export class MenuState implements State {
     private scene: PlayScene;
 
     private controls: Controls;
-
-    private inGameUI: InGameUI;
 
     constructor(scene: PlayScene) {
         this.scene = scene;
@@ -20,14 +17,10 @@ export class MenuState implements State {
     enter(stateMachine: StateMachineInterface): void {
         this.scene.getInputState().moveDir.setTo(0, 0);
         this.addEventListeners();
-
-        this.inGameUI = new InGameUI(this.scene, 400, 300);
-        this.scene.add.existing(this.inGameUI);
     }
 
     exit(): void {
         this.removeEventListeners();
-        this.inGameUI.destroy();
     }
 
     updateState(stateMachine: StateMachineInterface): void {
