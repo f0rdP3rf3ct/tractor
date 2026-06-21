@@ -14,6 +14,36 @@
 <body>
 <div id="container">
     <div id="game"></div>
+
+    <div id="ui-overlay">
+
+        <div id="panel-loading">
+            <p>Loading&hellip;</p>
+            <progress id="progress-bar" value="0" max="100"></progress>
+        </div>
+
+        <div id="panel-menu" hidden>
+            <h1>Non-Stop Crops</h1>
+            <button id="btn-start">Start Game</button>
+        </div>
+
+        <div id="panel-ingame-menu" hidden>
+            <h2>Controls</h2>
+            <p>Arrow keys / WASD &mdash; steer the vehicle</p>
+            <p>Harvest all crops to win!</p>
+            <button id="btn-play">Play!</button>
+        </div>
+
+        <div id="panel-countdown" hidden>
+            <p id="countdown-text"></p>
+        </div>
+
+        <div id="panel-victory" hidden>
+            <h2>You Win!</h2>
+            <button id="btn-play-again">Play Again</button>
+        </div>
+
+    </div>
 </div>
 
 <!-- PWA -->
@@ -21,6 +51,59 @@
     if ('serviceWorker' in navigator) {
         navigator.serviceWorker.register('/sw.js');
     }
+</script>
+
+<script>
+    (function () {
+        function sendToGame(action) {
+            window.dispatchEvent(new CustomEvent('nsc:ui', { detail: { action: action } }));
+        }
+
+        var panelLoading    = document.getElementById('panel-loading');
+        var panelMenu       = document.getElementById('panel-menu');
+        var panelIngameMenu = document.getElementById('panel-ingame-menu');
+        var panelCountdown  = document.getElementById('panel-countdown');
+        var panelVictory    = document.getElementById('panel-victory');
+        var progressBar     = document.getElementById('progress-bar');
+        var countdownText   = document.getElementById('countdown-text');
+
+        document.getElementById('btn-start').addEventListener('click', function () { sendToGame('start-game'); });
+        document.getElementById('btn-play').addEventListener('click', function () { sendToGame('start-play'); });
+        document.getElementById('btn-play-again').addEventListener('click', function () { sendToGame('play-again'); });
+
+        function runCountdown() {
+            var steps = ['3', '2', '1', 'Go!'];
+            var i = 0;
+            countdownText.textContent = steps[0];
+            var interval = setInterval(function () {
+                i++;
+                if (i < steps.length) {
+                    countdownText.textContent = steps[i];
+                } else {
+                    clearInterval(interval);
+                    panelCountdown.hidden = true;
+                    sendToGame('countdown-complete');
+                }
+            }, 1000);
+        }
+
+        window.addEventListener('nsc:game', function (e) {
+            var action   = e.detail.action;
+            var progress = e.detail.progress;
+            switch (action) {
+                case 'loading-progress':  progressBar.value = Math.round(progress * 100); break;
+                case 'loading-complete':  panelLoading.hidden = true; break;
+                case 'show-menu':         panelMenu.hidden = false; break;
+                case 'hide-menu':         panelMenu.hidden = true; break;
+                case 'show-ingame-menu':  panelIngameMenu.hidden = false; break;
+                case 'hide-ingame-menu':  panelIngameMenu.hidden = true; break;
+                case 'show-countdown':    panelCountdown.hidden = false; runCountdown(); break;
+                case 'hide-countdown':    panelCountdown.hidden = true; break;
+                case 'show-victory':      panelVictory.hidden = false; break;
+                case 'hide-victory':      panelVictory.hidden = true; break;
+            }
+        });
+    }());
 </script>
 
 </body>

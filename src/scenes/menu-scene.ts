@@ -1,4 +1,5 @@
 import {Controls} from "../misc/Controls";
+import {EventBus, UI_EVENTS, GAME_EVENTS} from "../ui/EventBus";
 
 export class MenuScene extends Phaser.Scene {
 
@@ -9,18 +10,22 @@ export class MenuScene extends Phaser.Scene {
     }
 
     create() {
-        this.controls = new Controls(this);
+        EventBus.emit(UI_EVENTS.SHOW_MENU);
 
+        this.controls = new Controls(this);
         this.controls.inputActionEvent.addListener(Controls.INPUT_ACTION_EVENT_KEY, (key: string) => {
-            switch (key) {
-                case Controls.INPUT_ACTION_EVENT_KEY_BUTTON_A:
-                    this.scene.start('PlayScene');
-                    break;
+            if (key === Controls.INPUT_ACTION_EVENT_KEY_BUTTON_A) {
+                EventBus.emit(GAME_EVENTS.START_GAME);
             }
+        });
+
+        EventBus.once(GAME_EVENTS.START_GAME, () => {
+            EventBus.emit(UI_EVENTS.HIDE_MENU);
+            this.scene.start('PlayScene');
         });
     }
 
-    update(time: number, delta: number) {
+    update(_time: number, _delta: number) {
         this.controls.update();
     }
 }

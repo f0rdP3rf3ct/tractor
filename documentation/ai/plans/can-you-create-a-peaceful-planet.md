@@ -1,146 +1,331 @@
-# Plan: Strip All Phaser Canvas UI
+# Plan: Implement GameBridge + Functional HTML UI
 
 ## Context
 
-All current UI (loading bar, menu graphics, in-game controls overlay, countdown animation, victory modal) is rendered as Phaser `GameObjects` on the canvas. The future plan (`concerning-the-html-ui-is-hidden-moth.md`) replaces all of this with a fully decoupled HTML layer via `GameBridge` + window `CustomEvent`s.
+The Phaser canvas UI was removed in the previous step (all `InGameUI`, `EndGameUI`, countdown tweens, and loading graphics are gone). This plan wires up the `GameBridge` architecture described in `concerning-the-html-ui-is-hidden-moth.md` and adds a **functional but unstyled** HTML UI in `src/index.html`. The user will handle all visual styling separately.
 
-This is **step 1 of 2**: remove the Phaser UI layer entirely so the codebase is a clean slate for the HTML UI to wire into. No EventBus, no GameBridge, no HTML panels yet — just deletion and simplification.
+The game-side emits internal events via a singleton `EventBus`. `GameBridge` translates those to `window.CustomEvent`s. The HTML UI script listens to one event (`nsc:game`) and sends one event (`nsc:ui`). Neither side knows about the other's internals.
 
-The game **must stay fully playable** after this step. All state transitions and audio remain functional; the canvas just goes dark/blank where UI used to be.
-
----
-
-## What to Remove
-
-All Phaser `GameObjects` used purely for display:
-- Canvas progress bar in `LoadingScene.preload()`
-- Background/logo/button/arrow images in `MenuScene.create()`
-- `InGameUI` container (controls overlay) in `MenuState`
-- Countdown animation container + tween chain in `CountDownState`
-- `EndGameUI` container (victory modal) in `GameOverState`
-- `inGameUi` atlas load (no longer referenced once the objects above are gone)
-
-## What to Preserve
-
-- State machine flow (all transitions remain)
-- `Controls` input in every state/scene (keyboard still drives the game)
-- `playAudioCoin()` on `PlayScene` — called by `GameOverState`, needed by GameBridge plan
-- `LoadingScene.loadAssets()` for all game sprites and audio
-- `BootScene` and the `uiAssets` atlas — BootScene still loads it (GameBridge plan removes it in step 2)
-- All crop/physics/rendering logic
+One addition beyond the original plan: a `'start-play'` UI→Game action is needed so the in-game controls panel has a functional "Play!" HTML button (alongside the keyboard shortcut).
 
 ---
 
-## Files to Delete
+## New Files
 
-| File | Why |
-|---|---|
-| `src/objects/InGameUI.ts` | Phaser canvas overlay; no longer rendered; listed as delete in GameBridge plan |
-| `src/objects/EndGameUI.ts` | Phaser canvas overlay; no longer rendered; listed as delete in GameBridge plan |
+### `src/ui/EventBus.ts`
 
----
+Singleton Phaser EventEmitter + typed event-name constants.
 
-## Files to Modify
-
-### 1. `src/scenes/loading-scene.ts`
-
-Remove from `preload()`:
-- `this.add.image(...)` background and loading image
-- `const progressBar = this.add.graphics()`
-- Both `this.load.on('progress', ...)` and `this.load.on('complete', ...)` callbacks
-
-Remove from `loadAssets()`:
-- `this.load.atlas(InGameUI.INGAME_UI_KEY, ...)` — atlas unused after UI removal
-
-Remove import:
-- `import {InGameUI} from "../objects/InGameUI"`
-
-Keep:
-- `create()` → `this.scene.start('MenuScene')`
-- All other `this.load.*` calls (game atlas, all audio)
-
----
-
-### 2. `src/scenes/menu-scene.ts`
-
-Remove from `create()`:
-- All `this.add.*` calls (background, logo, buttons, selection arrow)
-- Logo tween (`this.tweens.add(...)`)
-- Call to `this.updateAxisSelection(0)`
-
-Remove class properties:
-- `logo`, `buttonNewGameImage`, `buttonControlsImage`, `selectionArrowImage`
-- `selections`, `currentSelectionIndex`, `buttonIsDown`
-
-Remove methods:
-- `updateAxisSelection(dir: number)`
-
-Keep:
-- `Controls` setup and the `inputActionEvent` listener for `BUTTON_A` → `this.scene.start('PlayScene')`
-- `update()` calling `updateControls()`
-- `updateControls()` — but simplify: remove axis direction checks (`up()`, `down()`, `noAxisIsPressed()`), keep only `this.controls.update()` (needed for gamepad polling)
-
----
-
-### 3. `src/states/MenuState.ts`
-
-Remove:
-- `import {InGameUI} from "../objects/InGameUI"`
-- `private inGameUI: InGameUI` property
-- `new InGameUI(...)` and `this.scene.add.existing(...)` in `enter()`
-- `this.inGameUI.destroy()` in `exit()`
-
-Keep everything else as-is (Controls, `BUTTON_A` → `CountDownState`).
-
----
-
-### 4. `src/states/CountDownState.ts`
-
-Replace the entire tween/container system with a single `time.delayedCall` placeholder.
-
-Remove:
-- `import {InGameUI} from "../objects/InGameUI"`
-- `private animContainer: Container` property
-- `private currentAnimIndex: number` property
-- All Phaser type imports (`Image`, `Container`, `TweenChainBuilderConfig`)
-- `createAssets()`, `getImageAt()`, `animateImageAt()` methods
-
-Change `enter()`:
 ```ts
-enter(stateMachine: StateMachineInterface): void {
-    this.scene.time.delayedCall(4000, () => {
-        this.scene.changeState(new PlayState(this.scene));
+import 'phaser';
+
+export const EventBus = new Phaser.Events.EventEmitter();
+
+export const UI_EVENTS = {
+  LOADING_PROGRESS:  'ui:loading-progress',
+  LOADING_COMPLETE:  'ui:loading-complete',
+  SHOW_MENU:         'ui:show-menu',
+  HIDE_MENU:         'ui:hide-menu',
+  SHOW_INGAME_MENU:  'ui:show-ingame-menu',
+  HIDE_INGAME_MENU:  'ui:hide-ingame-menu',
+  SHOW_COUNTDOWN:    'ui:show-countdown',
+  HIDE_COUNTDOWN:    'ui:hide-countdown',
+  SHOW_VICTORY:      'ui:show-victory',
+  HIDE_VICTORY:      'ui:hide-victory',
+} as const;
+
+export const GAME_EVENTS = {
+  START_GAME:         'game:start',
+  START_PLAY:         'game:start-play',   // ← addition: triggers MenuState → CountDownState
+  PLAY_AGAIN:         'game:play-again',
+  COUNTDOWN_COMPLETE: 'game:countdown-complete',
+} as const;
+```
+
+### `src/ui/GameBridge.ts`
+
+Explicit bidirectional mapping tables. Exactly as in the source plan, with `start-play` added to `ACTION_TO_BUS`.
+
+```ts
+import { EventBus, UI_EVENTS, GAME_EVENTS } from './EventBus';
+
+const BUS_TO_ACTION: Record<string, string> = {
+  [UI_EVENTS.LOADING_PROGRESS]:  'loading-progress',
+  [UI_EVENTS.LOADING_COMPLETE]:  'loading-complete',
+  [UI_EVENTS.SHOW_MENU]:         'show-menu',
+  [UI_EVENTS.HIDE_MENU]:         'hide-menu',
+  [UI_EVENTS.SHOW_INGAME_MENU]:  'show-ingame-menu',
+  [UI_EVENTS.HIDE_INGAME_MENU]:  'hide-ingame-menu',
+  [UI_EVENTS.SHOW_COUNTDOWN]:    'show-countdown',
+  [UI_EVENTS.HIDE_COUNTDOWN]:    'hide-countdown',
+  [UI_EVENTS.SHOW_VICTORY]:      'show-victory',
+  [UI_EVENTS.HIDE_VICTORY]:      'hide-victory',
+};
+
+const ACTION_TO_BUS: Record<string, string> = {
+  'start-game':         GAME_EVENTS.START_GAME,
+  'start-play':         GAME_EVENTS.START_PLAY,
+  'play-again':         GAME_EVENTS.PLAY_AGAIN,
+  'countdown-complete': GAME_EVENTS.COUNTDOWN_COMPLETE,
+};
+
+export function initGameBridge(): void {
+  Object.entries(BUS_TO_ACTION).forEach(([busEvent, action]) => {
+    EventBus.on(busEvent, (payload?: Record<string, unknown>) => {
+      window.dispatchEvent(new CustomEvent('nsc:game', {
+        detail: { action, ...payload },
+      }));
     });
+  });
+
+  window.addEventListener('nsc:ui', (e: Event) => {
+    const { action } = (e as CustomEvent<{ action: string }>).detail;
+    const busEvent = ACTION_TO_BUS[action];
+    if (busEvent) EventBus.emit(busEvent);
+  });
 }
 ```
 
-Change `exit()`:
-- Remove `this.animContainer.destroy()` — nothing to destroy anymore; leave `exit()` as an empty method
+---
 
-This 4-second delay matches the original visual countdown duration and serves as a placeholder until the HTML countdown fires `countdown-complete`.
+## Modified TypeScript Files
+
+### `src/game.ts`
+
+Add `import { initGameBridge } from './ui/GameBridge'` and call `initGameBridge()` after `new Game(GameConfig)`.
+
+### `src/scenes/loading-scene.ts`
+
+In `preload()`, restore the `load.on('progress', ...)` and `load.on('complete', ...)` handlers — but emit on `EventBus` instead of drawing canvas graphics:
+
+```ts
+import { EventBus, UI_EVENTS } from '../ui/EventBus';
+
+// in preload():
+this.load.on('progress', (value: number) => {
+    EventBus.emit(UI_EVENTS.LOADING_PROGRESS, { progress: value });
+});
+this.load.on('complete', () => {
+    EventBus.emit(UI_EVENTS.LOADING_COMPLETE);
+});
+```
+
+### `src/scenes/menu-scene.ts`
+
+Both keyboard (BUTTON_A) and the HTML button go through `EventBus.emit(GAME_EVENTS.START_GAME)`. The scene listens via `EventBus.once` to guarantee a single transition and no zombie listener across restarts.
+
+```ts
+import { EventBus, UI_EVENTS, GAME_EVENTS } from '../ui/EventBus';
+
+create() {
+    EventBus.emit(UI_EVENTS.SHOW_MENU);
+
+    this.controls = new Controls(this);
+    this.controls.inputActionEvent.addListener(Controls.INPUT_ACTION_EVENT_KEY, (key: string) => {
+        if (key === Controls.INPUT_ACTION_EVENT_KEY_BUTTON_A) {
+            EventBus.emit(GAME_EVENTS.START_GAME);
+        }
+    });
+
+    EventBus.once(GAME_EVENTS.START_GAME, () => {
+        EventBus.emit(UI_EVENTS.HIDE_MENU);
+        this.scene.start('PlayScene');
+    });
+}
+
+update(_time: number, _delta: number) {
+    this.controls.update();
+}
+```
+
+Remove all canvas-object properties and `updateAxisSelection` / `updateControls` (already gone from prior step).
+
+### `src/states/MenuState.ts`
+
+BUTTON_A now emits `START_PLAY` on the bus (instead of calling `changeState` directly). The state's `EventBus.once` listener handles the transition — unifying keyboard and HTML button through one path.
+
+```ts
+import { EventBus, UI_EVENTS, GAME_EVENTS } from '../ui/EventBus';
+
+enter(stateMachine): void {
+    this.scene.getInputState().moveDir.setTo(0, 0);
+    EventBus.emit(UI_EVENTS.SHOW_INGAME_MENU);
+    EventBus.once(GAME_EVENTS.START_PLAY, () => {
+        this.scene.changeState(new CountDownState(this.scene));
+    });
+    this.addEventListeners();  // Controls listener emits START_PLAY on bus
+}
+
+exit(): void {
+    EventBus.removeListener(GAME_EVENTS.START_PLAY);
+    EventBus.emit(UI_EVENTS.HIDE_INGAME_MENU);
+    this.removeEventListeners();
+}
+
+// Controls listener:
+case Controls.INPUT_ACTION_EVENT_KEY_BUTTON_A:
+    EventBus.emit(GAME_EVENTS.START_PLAY);
+```
+
+### `src/states/CountDownState.ts`
+
+Remove the 4-second `delayedCall` placeholder. Replace with EventBus listener for `COUNTDOWN_COMPLETE`. The HTML countdown fires this when its animation ends.
+
+```ts
+import { EventBus, UI_EVENTS, GAME_EVENTS } from '../ui/EventBus';
+
+enter(stateMachine): void {
+    EventBus.emit(UI_EVENTS.SHOW_COUNTDOWN);
+    EventBus.once(GAME_EVENTS.COUNTDOWN_COMPLETE, () => {
+        this.scene.changeState(new PlayState(this.scene));
+    });
+}
+
+exit(): void {
+    EventBus.removeListener(GAME_EVENTS.COUNTDOWN_COMPLETE);
+    EventBus.emit(UI_EVENTS.HIDE_COUNTDOWN);
+}
+```
+
+### `src/states/GameOverState.ts`
+
+BUTTON_A emits `PLAY_AGAIN` on the bus. `EventBus.once` handles the transition. Coin audio is called directly in `enter()` (no HTML star animation in the basic UI). `_transitioning` guard prevents double-fire if both keyboard and button fire quickly.
+
+```ts
+import { EventBus, UI_EVENTS, GAME_EVENTS } from '../ui/EventBus';
+
+private _transitioning = false;
+
+enter(stateMachine): void {
+    this._transitioning = false;
+    EventBus.emit(UI_EVENTS.SHOW_VICTORY);
+    this.scene.playAudioCoin();
+    EventBus.once(GAME_EVENTS.PLAY_AGAIN, () => {
+        if (this._transitioning) return;
+        this._transitioning = true;
+        this.scene.shutDown();
+        this.scene.scene.start('MenuScene');
+    });
+    this.addEventListeners();  // Controls listener emits PLAY_AGAIN on bus
+}
+
+exit(): void {
+    EventBus.removeListener(GAME_EVENTS.PLAY_AGAIN);
+    EventBus.emit(UI_EVENTS.HIDE_VICTORY);
+    this.removeEventListeners();
+}
+
+// Controls listener:
+case Controls.INPUT_ACTION_EVENT_KEY_BUTTON_A:
+    EventBus.emit(GAME_EVENTS.PLAY_AGAIN);
+```
 
 ---
 
-### 5. `src/states/GameOverState.ts`
+## HTML UI — `src/index.html`
 
-Remove:
-- `import {EndGameUI} from "../objects/EndGameUI"`
-- `private endGameUI: EndGameUI` property
-- `new EndGameUI(...)` and `this.scene.add.existing(...)` in `enter()`
-- `this.endGameUI.destroy()` in `exit()`
+Add five panels inside a `<div id="ui-overlay">` (placed inside `#container`, after `#game`). The loading panel is visible on load; all others start hidden.
 
-Keep everything else (Controls, `BUTTON_A` → `scene.shutDown()` + `scene.start('MenuScene')`).
+**Panels:**
+
+```html
+<div id="ui-overlay">
+
+  <div id="panel-loading">
+    <p>Loading…</p>
+    <progress id="progress-bar" value="0" max="100"></progress>
+  </div>
+
+  <div id="panel-menu" hidden>
+    <h1>Non-Stop Crops</h1>
+    <button id="btn-start">Start Game</button>
+  </div>
+
+  <div id="panel-ingame-menu" hidden>
+    <h2>Controls</h2>
+    <p>Arrow keys / WASD — steer the vehicle</p>
+    <p>Harvest all crops to win!</p>
+    <button id="btn-play">Play!</button>
+  </div>
+
+  <div id="panel-countdown" hidden>
+    <p id="countdown-text"></p>
+  </div>
+
+  <div id="panel-victory" hidden>
+    <h2>You Win!</h2>
+    <button id="btn-play-again">Play Again</button>
+  </div>
+
+</div>
+```
+
+**Inline `<script>` (before `</body>`):**
+
+```js
+(function () {
+  function sendToGame(action) {
+    window.dispatchEvent(new CustomEvent('nsc:ui', { detail: { action: action } }));
+  }
+
+  var panelLoading    = document.getElementById('panel-loading');
+  var panelMenu       = document.getElementById('panel-menu');
+  var panelIngameMenu = document.getElementById('panel-ingame-menu');
+  var panelCountdown  = document.getElementById('panel-countdown');
+  var panelVictory    = document.getElementById('panel-victory');
+  var progressBar     = document.getElementById('progress-bar');
+  var countdownText   = document.getElementById('countdown-text');
+
+  document.getElementById('btn-start').addEventListener('click', function () { sendToGame('start-game'); });
+  document.getElementById('btn-play').addEventListener('click', function () { sendToGame('start-play'); });
+  document.getElementById('btn-play-again').addEventListener('click', function () { sendToGame('play-again'); });
+
+  function runCountdown() {
+    var steps = ['3', '2', '1', 'Go!'];
+    var i = 0;
+    countdownText.textContent = steps[0];
+    var interval = setInterval(function () {
+      i++;
+      if (i < steps.length) {
+        countdownText.textContent = steps[i];
+      } else {
+        clearInterval(interval);
+        panelCountdown.hidden = true;
+        sendToGame('countdown-complete');
+      }
+    }, 1000);
+  }
+
+  window.addEventListener('nsc:game', function (e) {
+    var action   = e.detail.action;
+    var progress = e.detail.progress;
+    switch (action) {
+      case 'loading-progress':  progressBar.value = Math.round(progress * 100); break;
+      case 'loading-complete':  panelLoading.hidden = true; break;
+      case 'show-menu':         panelMenu.hidden = false; break;
+      case 'hide-menu':         panelMenu.hidden = true; break;
+      case 'show-ingame-menu':  panelIngameMenu.hidden = false; break;
+      case 'hide-ingame-menu':  panelIngameMenu.hidden = true; break;
+      case 'show-countdown':    panelCountdown.hidden = false; runCountdown(); break;
+      case 'hide-countdown':    panelCountdown.hidden = true; break;
+      case 'show-victory':      panelVictory.hidden = false; break;
+      case 'hide-victory':      panelVictory.hidden = true; break;
+    }
+  });
+}());
+```
 
 ---
 
 ## Verification
 
-1. `npx tsc --noEmit` — zero type errors
+1. `npx tsc --noEmit` — zero new errors (pre-existing Phaser type errors in `node_modules/` are acceptable)
 2. `npm run dev`, open `http://localhost:5555`
 3. Walk the full flow:
-   - **Boot** → blank loading screen (progress bar gone, background gone)
-   - **Menu** → blank canvas, press Space/A → starts game
-   - **Countdown** → blank canvas, 4-second pause, then farming begins
-   - **Play** → game works normally (crops, tractor/harvester, scroll)
-   - **Win** → blank victory screen, press Space/A → back to blank menu
-4. Confirm no TypeScript errors referencing `InGameUI` or `EndGameUI`
+   - **Loading**: progress bar fills, panel hides automatically
+   - **Menu**: "Non-Stop Crops" heading + "Start Game" button appears; click it OR press Space
+   - **In-game menu**: controls text + "Play!" button; click it OR press Space
+   - **Countdown**: 3 → 2 → 1 → Go! displayed in HTML, then gameplay starts
+   - **Play**: game runs normally (tractor, crops, scroll)
+   - **Victory**: "You Win!" + "Play Again" button; click it OR press Space → back to menu
+4. Console test: `window.dispatchEvent(new CustomEvent('nsc:ui', { detail: { action: 'start-game' } }))` while on the menu panel — should start the game

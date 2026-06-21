@@ -2,6 +2,7 @@ import {State, StateMachineInterface} from "../interfaces/stateMachine.interface
 import {PlayScene} from "../scenes/play-scene";
 import {Controls} from "../misc/Controls";
 import {CountDownState} from "./CountDownState";
+import {EventBus, UI_EVENTS, GAME_EVENTS} from "../ui/EventBus";
 
 export class MenuState implements State {
 
@@ -16,10 +17,16 @@ export class MenuState implements State {
 
     enter(stateMachine: StateMachineInterface): void {
         this.scene.getInputState().moveDir.setTo(0, 0);
+        EventBus.emit(UI_EVENTS.SHOW_INGAME_MENU);
+        EventBus.once(GAME_EVENTS.START_PLAY, () => {
+            this.scene.changeState(new CountDownState(this.scene));
+        });
         this.addEventListeners();
     }
 
     exit(): void {
+        EventBus.removeListener(GAME_EVENTS.START_PLAY);
+        EventBus.emit(UI_EVENTS.HIDE_INGAME_MENU);
         this.removeEventListeners();
     }
 
@@ -31,7 +38,7 @@ export class MenuState implements State {
         this.controls.inputActionEvent.addListener(Controls.INPUT_ACTION_EVENT_KEY, (key: string) => {
             switch (key) {
                 case Controls.INPUT_ACTION_EVENT_KEY_BUTTON_A:
-                    this.scene.changeState(new CountDownState(this.scene));
+                    EventBus.emit(GAME_EVENTS.START_PLAY);
                     break;
             }
         })
@@ -42,7 +49,6 @@ export class MenuState implements State {
     }
 
     private updateInput() {
-
     }
 
 }

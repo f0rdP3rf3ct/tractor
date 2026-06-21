@@ -1,4 +1,5 @@
 import {PlayScene} from "./play-scene";
+import {EventBus, UI_EVENTS} from "../ui/EventBus";
 
 export class LoadingScene extends Phaser.Scene {
 
@@ -9,6 +10,14 @@ export class LoadingScene extends Phaser.Scene {
     }
 
     preload() {
+        this.load.on('progress', (value: number) => {
+            EventBus.emit(UI_EVENTS.LOADING_PROGRESS, { progress: value });
+        });
+
+        this.load.on('complete', () => {
+            EventBus.emit(UI_EVENTS.LOADING_COMPLETE);
+        });
+
         this.loadAssets();
     }
 
@@ -23,7 +32,6 @@ export class LoadingScene extends Phaser.Scene {
         this.load.audio('honk', ['./assets/audio/honk01.mp3', './assets/audio/honk01.ogg']);
         this.load.audio('coin', ['./assets/audio/coin01.mp3', './assets/audio/coin01.ogg']);
         this.load.audio('win', ['./assets/audio/win01.mp3', './assets/audio/win01.ogg']);
-
     }
 
     create() {
