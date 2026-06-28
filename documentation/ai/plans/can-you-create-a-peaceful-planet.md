@@ -317,6 +317,12 @@ Add five panels inside a `<div id="ui-overlay">` (placed inside `#container`, af
 
 ---
 
+## Framework Decision
+
+Vanilla JS (no framework). The inline script in `src/index.html` is the UI layer — show/hide panels via the `hidden` attribute, driven by `nsc:game` CustomEvents. User handles all styling via `assets/styles/css/style.css`.
+
+---
+
 ## Verification
 
 1. `npx tsc --noEmit` — zero new errors (pre-existing Phaser type errors in `node_modules/` are acceptable)

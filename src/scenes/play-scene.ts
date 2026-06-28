@@ -16,6 +16,7 @@ import {State, StateMachineInterface} from "../interfaces/stateMachine.interface
 import {MenuState} from "../states/MenuState";
 import {GameOverState} from "../states/GameOverState";
 import {PlayState} from "../states/PlayState";
+import {CountDownState} from "../states/CountDownState";
 
 
 export class PlayScene extends Phaser.Scene implements StateMachineInterface {
@@ -126,7 +127,7 @@ export class PlayScene extends Phaser.Scene implements StateMachineInterface {
         this.createParticles();
         this.createPhysics();
 
-        this.changeState(new PlayState(this))
+        this.changeState(new CountDownState(this))
     }
 
     update(time: number, delta: number) {
